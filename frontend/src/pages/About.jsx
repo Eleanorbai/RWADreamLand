@@ -9,13 +9,16 @@ export default function About() {
         <span className="text-4xl ml-2" role="img" aria-label="books">📚</span>
       </div>
       <p className="mb-4">
-        <strong>通商数据RWA学习社区</strong>，是由通商数据发起并主导建设的一个"开放共创、价值共建"的专业型学习平台。
+        <strong>RWA公社</strong>，是一个由通商数据成员发起、面向真实项目场景的 RWA 学习与共创平台。
       </p>
       <p className="mb-4">
         我们相信，未来的产业升级与金融创新，将越来越依赖于真实世界资产（RWA）与区块链等技术的深度融合。<br/>
         但比技术更重要的，是对场景的理解力、模型的设计力和资源的整合力。<br/>
         这正是我们创建这个平台的初衷。
       </p>
+      <p className="mb-4">
+        所以，我们关注真实世界资产（RWA）如何通过区块链机制实现数字化落地，也关注人才如何通过学习、贡献与协作获得实际参与机会。
+      </p>  
       <p className="mb-4">
         在这里，每一位成员不仅是学习者，更是共建者。<br/>
         你可以围绕 RWA 项目提交可行的商业模式设计、行业研究、案例材料；也可以参与到实际项目的推演、研讨与共创中。<br/>
@@ -29,11 +32,11 @@ export default function About() {
         "从材料贡献者，到方案设计者，最终成为RWA项目的参与者。"
       </blockquote>
       <p className="mb-4">
-        这是通商数据希望与你共同完成的成长闭环。
+        这是社区希望与你共同完成的成长闭环。
       </p>
       <p className="mb-4">
-        我们欢迎一切真诚、专业、有使命感的伙伴加入这个平台。<br/>
-        让我们一起，把学习变成生产力，把知识变成资产，把共识变成合作，把机会变成结果。
+        平台由社区成员共同维护，由通商数据提供生态资源支持。<br/>
+        我们诚邀每一位具备专业知识与实践热情的伙伴，共同探索真实世界资产的创新路径。
       </p>
       <div className="flex justify-center mt-8">
         <span className="text-3xl mx-2" role="img" aria-label="rocket">🚀</span>
