@@ -1,0 +1,63 @@
+
+> react_repo@0.0.0 build /workspace/rwa-learning-platform
+> yes | pnpm install && rm -rf node_modules/.vite-temp && tsc -b && vite build
+
+Lockfile is up to date, resolution step is skipped
+Already up to date
+Done in 1.1s using pnpm v10.12.2
+vite v6.2.6 building for production...
+transforming (1) src/main.tsxtransforming (7) node_modules/.pnpm/react@18.3.1/node_modules/react/cjs/reatransforming (15) src/index.csstransforming (29) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodetransforming (33) node_modules/.pnpm/react-syntax-highlighter@15.6.1_react@transforming (73) node_modules/.pnpm/react-syntax-highlighter@15.6.1_react@transforming (94) node_modules/.pnpm/react-dom@18.3.1_react@18.3.1/node_modtransforming (136) node_modules/.pnpm/react-dom@18.3.1_react@18.3.1/node_motransforming (177) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodtransforming (257) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodtransforming (345) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodtransforming (464) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodtransforming (617) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodtransforming (837) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/nodtransforming (1037) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/notransforming (1257) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/notransforming (1452) node_modules/.pnpm/lucide-react@0.364.0_react@18.3.1/notransforming (1557) node_modules/.pnpm/@babel+runtime@7.27.0/node_modules/@transforming (1559) node_modules/.pnpm/highlight.js@10.7.3/node_modules/higtransforming (1596) node_modules/.pnpm/highlight.js@10.7.3/node_modules/higtransforming (1639) node_modules/.pnpm/highlight.js@10.7.3/node_modules/higtransforming (1674) node_modules/.pnpm/highlight.js@10.7.3/node_modules/higtransforming (1719) node_modules/.pnpm/highlight.js@10.7.3/node_modules/higtransforming (1739) node_modules/.pnpm/highlight.js@10.7.3/node_modules/higtransforming (1756) node_modules/.pnpm/refractor@3.6.0/node_modules/refracttransforming (1792) node_modules/.pnpm/refractor@3.6.0/node_modules/refracttransforming (1847) node_modules/.pnpm/refractor@3.6.0/node_modules/refracttransforming (1909) node_modules/.pnpm/refractor@3.6.0/node_modules/refracttransforming (1968) node_modules/.pnpm/refractor@3.6.0/node_modules/refracttransforming (2035) node_modules/.pnpm/refractor@3.6.0/node_modules/refracttransforming (2056) node_modules/.pnpm/mermaid@11.7.0/node_modules/mermaid/transforming (2540) node_modules/.pnpm/@babel+runtime@7.27.0/node_modules/@transforming (2543) node_modules/.pnpm/@babel+runtime@7.27.0/node_modules/@transforming (2601) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (2624) node_modules/.pnpm/dagre-d3-es@7.0.11/node_modules/dagrtransforming (2634) node_modules/.pnpm/@babel+runtime@7.27.0/node_modules/@transforming (2642) node_modules/.pnpm/d3-array@3.2.4/node_modules/d3-arraytransforming (2656) node_modules/.pnpm/d3-array@3.2.4/node_modules/d3-arraytransforming (2661) node_modules/.pnpm/d3-array@3.2.4/node_modules/d3-arraytransforming (2743) node_modules/.pnpm/d3-format@3.1.0/node_modules/d3-formtransforming (2822) node_modules/.pnpm/d3-polygon@3.0.1/node_modules/d3-poltransforming (2944) node_modules/.pnpm/d3-shape@3.2.0/node_modules/d3-shapetransforming (3036) node_modules/.pnpm/@iconify+utils@2.3.0/node_modules/@itransforming (3098) node_modules/.pnpm/property-information@5.6.0/node_modutransforming (3193) node_modules/.pnpm/d3-quadtree@3.0.1/node_modules/d3-qutransforming (3285) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (3344) node_modules/.pnpm/xtend@4.0.2/node_modules/xtend/immuttransforming (3368) node_modules/.pnpm/d3-shape@1.3.7/node_modules/d3-shapetransforming (3450) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (3616) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (3757) node_modules/.pnpm/d3-array@2.12.1/node_modules/d3-arratransforming (3867) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (3988) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (4087) node_modules/.pnpm/langium@3.3.1/node_modules/langium/ltransforming (4196) node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodastransforming (4242) node_modules/.pnpm/vscode-jsonrpc@8.2.0/node_modules/vs✓ 4290 modules transformed.
+rendering chunks (1)...rendering chunks (2)...rendering chunks (3)...rendering chunks (4)...rendering chunks (5)...rendering chunks (6)...rendering chunks (7)...rendering chunks (8)...rendering chunks (9)...rendering chunks (10)...rendering chunks (11)...rendering chunks (12)...rendering chunks (13)...rendering chunks (14)...rendering chunks (15)...rendering chunks (16)...rendering chunks (17)...rendering chunks (18)...rendering chunks (19)...rendering chunks (20)...rendering chunks (21)...rendering chunks (22)...rendering chunks (23)...rendering chunks (24)...rendering chunks (25)...rendering chunks (26)...rendering chunks (27)...rendering chunks (28)...rendering chunks (29)...rendering chunks (30)...rendering chunks (31)...rendering chunks (32)...rendering chunks (33)...rendering chunks (34)...rendering chunks (35)...rendering chunks (36)...rendering chunks (37)...rendering chunks (38)...rendering chunks (39)...rendering chunks (40)...rendering chunks (41)...rendering chunks (42)...rendering chunks (43)...rendering chunks (44)...rendering chunks (45)...rendering chunks (46)...computing gzip size (0)...computing gzip size (1)...computing gzip size (2)...computing gzip size (3)...computing gzip size (4)...computing gzip size (5)...computing gzip size (6)...computing gzip size (7)...computing gzip size (8)...computing gzip size (9)...computing gzip size (10)...computing gzip size (11)...computing gzip size (12)...computing gzip size (13)...computing gzip size (14)...computing gzip size (15)...computing gzip size (16)...computing gzip size (17)...computing gzip size (18)...computing gzip size (19)...computing gzip size (20)...computing gzip size (21)...computing gzip size (22)...computing gzip size (23)...computing gzip size (24)...computing gzip size (25)...computing gzip size (26)...computing gzip size (27)...computing gzip size (28)...computing gzip size (29)...computing gzip size (30)...computing gzip size (31)...computing gzip size (32)...computing gzip size (33)...computing gzip size (34)...computing gzip size (35)...computing gzip size (36)...computing gzip size (37)...computing gzip size (38)...computing gzip size (39)...computing gzip size (40)...computing gzip size (41)...computing gzip size (42)...computing gzip size (43)...computing gzip size (44)...computing gzip size (45)...computing gzip size (46)...computing gzip size (47)...computing gzip size (48)...dist/index.html                                           0.39 kB │ gzip:   0.28 kB
+dist/assets/index-CF5AUy2v.css                           80.11 kB │ gzip:  12.91 kB
+dist/assets/clone-BV-031V6.js                             0.10 kB │ gzip:   0.11 kB
+dist/assets/channel-BbJk5gMs.js                           0.11 kB │ gzip:   0.12 kB
+dist/assets/init-Gi6I4Gst.js                              0.15 kB │ gzip:   0.13 kB
+dist/assets/chunk-BQPDZTM5-Bo_lXvEx.js                    0.19 kB │ gzip:   0.16 kB
+dist/assets/chunk-44GW5IO5-CfGjQgm6.js                    0.29 kB │ gzip:   0.20 kB
+dist/assets/stateDiagram-v2-SNKRMT2F-CWFOdLVl.js          0.32 kB │ gzip:   0.25 kB
+dist/assets/classDiagram-EGQPL23Y-DdaNHJyJ.js             0.36 kB │ gzip:   0.27 kB
+dist/assets/classDiagram-v2-4EBKGCBT-DdaNHJyJ.js          0.36 kB │ gzip:   0.27 kB
+dist/assets/chunk-UIWBPB2F-BvxZ242X.js                    0.36 kB │ gzip:   0.27 kB
+dist/assets/infoDiagram-LZPS564M-QkbBQPvG.js              0.65 kB │ gzip:   0.44 kB
+dist/assets/chunk-HPOVUXKZ-CB49GAeF.js                    0.70 kB │ gzip:   0.47 kB
+dist/assets/ordinal-Cboi1Yqb.js                           1.19 kB │ gzip:   0.57 kB
+dist/assets/chunk-WZLT4MVT-CPYac4Eg.js                    1.43 kB │ gzip:   0.63 kB
+dist/assets/_basePickBy-hdpVGSgM.js                       2.58 kB │ gzip:   1.29 kB
+dist/assets/arc-BTKtzbTF.js                               3.43 kB │ gzip:   1.46 kB
+dist/assets/diagram-3XXCIKAB-Cn7tXxbk.js                  4.05 kB │ gzip:   1.76 kB
+dist/assets/pieDiagram-JVH3GP2A-DW6twQ6n.js               4.93 kB │ gzip:   2.21 kB
+dist/assets/graph-CALY0J7d.js                             5.91 kB │ gzip:   1.87 kB
+dist/assets/diagram-DTTGSU4T-BFZvDU_e.js                  6.02 kB │ gzip:   2.52 kB
+dist/assets/linear-1fo7kFp_.js                           10.17 kB │ gzip:   4.23 kB
+dist/assets/stateDiagram-WEXRT5W7-BM2G37Ey.js            10.31 kB │ gzip:   3.60 kB
+dist/assets/dagre-IE2X5DAH-Du855Cz_.js                   11.23 kB │ gzip:   4.18 kB
+dist/assets/_baseUniq-DAeJKrP4.js                        11.90 kB │ gzip:   4.62 kB
+dist/assets/kanban-definition-TWHLSRP4-L5TomPV_.js       20.56 kB │ gzip:   7.17 kB
+dist/assets/sankeyDiagram-XYA53EP7-CNlrgpjv.js           22.14 kB │ gzip:   8.09 kB
+dist/assets/journeyDiagram-KRBQ73NG-StAR_MmG.js          23.52 kB │ gzip:   8.26 kB
+dist/assets/timeline-definition-GH3MJCYT-D7Kem-U0.js     23.66 kB │ gzip:   8.22 kB
+dist/assets/gitGraphDiagram-SOPYED2O-DhUt1hVX.js         24.62 kB │ gzip:   7.54 kB
+dist/assets/erDiagram-FWMTN743-Cv5aS_A2.js               25.26 kB │ gzip:   8.73 kB
+dist/assets/layout-BnCvwTD9.js                           27.20 kB │ gzip:   9.67 kB
+dist/assets/requirementDiagram-PBTKI7ZP-ClFpzBcm.js      30.19 kB │ gzip:   9.33 kB
+dist/assets/quadrantDiagram-2GFVJBMM-BgEa1QEP.js         34.25 kB │ gzip:   9.95 kB
+dist/assets/chunk-GOYUR5SG-DxrqjPzW.js                   36.75 kB │ gzip:  11.82 kB
+dist/assets/xychartDiagram-4SJQ7YKO-C8ShjtII.js          40.09 kB │ gzip:  11.31 kB
+dist/assets/chunk-YQZZRAKN-b7JrwvVS.js                   45.18 kB │ gzip:  14.49 kB
+dist/assets/flowDiagram-OUUYVNGO-C0Ct-oQ_.js             60.97 kB │ gzip:  19.26 kB
+dist/assets/ganttDiagram-Y4ZJHTSR-BUsTPzDm.js            62.55 kB │ gzip:  20.96 kB
+dist/assets/c4Diagram-E5VUS4TQ-Cwk89V2S.js               70.12 kB │ gzip:  19.53 kB
+dist/assets/blockDiagram-ZUX3OVTL-BGZXQ5br.js            72.81 kB │ gzip:  20.54 kB
+dist/assets/sequenceDiagram-BLN7LXEI-C_-EsDWr.js         88.45 kB │ gzip:  25.08 kB
+dist/assets/mindmap-definition-RDSO3R44-qM_hEu2_.js     100.99 kB │ gzip:  28.38 kB
+dist/assets/architectureDiagram-KYWUMXXP-BHgoAnap.js    148.41 kB │ gzip:  41.69 kB
+dist/assets/katex-ChWnQ-fc.js                           265.45 kB │ gzip:  77.35 kB
+dist/assets/radar-VG2SY3DT-DO0M4irK.js                  318.05 kB │ gzip:  78.92 kB
+dist/assets/cytoscape.esm-BY7v1xhs.js                   438.68 kB │ gzip: 139.74 kB
+dist/assets/index-2-KBbi6l.js                         1,364.18 kB │ gzip: 440.74 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 17.02s
