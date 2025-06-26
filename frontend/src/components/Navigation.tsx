@@ -14,7 +14,8 @@ const Navigation: React.FC<NavigationProps> = ({ isMenuOpen, setIsMenuOpen }) =>
     { path: '/cases', icon: FileText, label: '案例研究', description: '中国RWA项目案例分析' },
     { path: '/implementation', icon: Code, label: '实践指南', description: '项目实施全流程指南' },
     { path: '/learning', icon: Map, label: '学习路径', description: '分层次技能学习路径' },
-    { path: '/me', icon: User, label: '用户中心', description: '查看和管理个人信息' },
+    // { path: '/me', icon: User, label: '用户中心', description: '查看和管理个人信息' },
+    // { path: '/register', icon: UserPlus, label: '注册', description: '新用户注册' },
   ];
 
   return (

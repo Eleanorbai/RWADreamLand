@@ -10,6 +10,7 @@ import LearningPathPage from './components/pages/LearningPathPage';
 import Me from './pages/Me';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import About from './pages/About';
 import './App.css';
 import { UserPlus, LogIn, User } from 'lucide-react';
 
@@ -34,6 +35,7 @@ function App() {
           <Route path="/cases" element={<CaseStudiesPage />} />
           <Route path="/implementation" element={<ImplementationPage />} />
           <Route path="/learning" element={<LearningPathPage />} />
+          <Route path="/about" element={<About />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/me" element={<Me />} />

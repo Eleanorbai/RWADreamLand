@@ -63,6 +63,13 @@ const Header: React.FC<HeaderProps> = ({ isMenuOpen, setIsMenuOpen }) => {
               学习路径
             </Link>
             <Link 
+              to="/about" 
+              className="text-gray-700 hover:text-pink-500 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
+            >
+              <span role="img" aria-label="sparkles" className="mr-1">✨</span>关于我们
+            </Link>
+            {/*
+            <Link 
               to="/me" 
               className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
@@ -74,6 +81,7 @@ const Header: React.FC<HeaderProps> = ({ isMenuOpen, setIsMenuOpen }) => {
             >
               注册
             </Link>
+            */}
           </nav>
 
           {/* Mobile menu button */}
