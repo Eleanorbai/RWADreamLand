@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
-from typing import List, Optional
+from typing import List, Optional, Dict
 import os
 import json
 import logging
@@ -883,6 +883,47 @@ def accept_github_contribution(
     
     return contribution
 
+@app.put("/github-contributions/{contribution_id}/reject", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
+def reject_github_contribution(
+    contribution_id: int,
+    reason: Optional[str] = None,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    """拒绝GitHub贡献"""
+    contribution = crud.reject_github_contribution(db, contribution_id=contribution_id, reason=reason)
+    if contribution is None:
+        raise HTTPException(status_code=404, detail="贡献记录不存在或已处理")
+    return contribution
+
+@app.get("/github-contributions", response_model=List[models.GitHubContributionPublic], tags=["GitHub贡献"])
+def list_github_contributions(
+    project_id: Optional[int] = None,
+    status: Optional[models.ContributionStatus] = None,
+    github_username: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    """获取GitHub贡献列表（管理员）"""
+    return crud.get_github_contributions_list(
+        db,
+        project_id=project_id,
+        status=status,
+        github_username=github_username,
+        skip=skip,
+        limit=limit
+    )
+
+@app.get("/github-contributions/stats", tags=["GitHub贡献"])
+def get_github_contributions_stats(
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    """获取GitHub贡献统计"""
+    return crud.get_github_contributions_stats(db)
+
 # GitHub Webhook端点
 @app.post("/github/webhook", tags=["GitHub集成"])
 async def github_webhook(
@@ -985,3 +1026,103 @@ def read_project_stats(
     if stats is None:
         raise HTTPException(status_code=404, detail="项目不存在")
     return stats
+
+# 实时贡献动态API
+@app.get("/open-projects/{project_id}/recent-activities", tags=["开源项目"])
+def read_recent_activities(
+    project_id: int,
+    limit: int = 20,
+    db: Session = Depends(get_db)
+):
+    """获取项目最近活动动态"""
+    contributions = crud.get_github_contributions(db, project_id=project_id, limit=limit)
+    activities = []
+    
+    for contrib in contributions:
+        activity = {
+            "id": contrib.id,
+            "type": "contribution",
+            "user": {
+                "github_username": contrib.github_username,
+                "avatar": f"https://github.com/{contrib.github_username}.png"
+            },
+            "action": f"提交了{models.contributionTypeLabels.get(contrib.contribution_type, '贡献')}",
+            "title": contrib.issue_title,
+            "points": contrib.contribution_points,
+            "status": contrib.status,
+            "blockchain_hash": contrib.blockchain_hash,
+            "created_at": contrib.github_created_at.isoformat(),
+            "accepted_at": contrib.accepted_at.isoformat() if contrib.accepted_at else None,
+            "is_on_chain": bool(contrib.blockchain_hash)
+        }
+        activities.append(activity)
+    
+    return {"activities": activities}
+
+# 区块链记录详情API
+@app.get("/blockchain-records/{record_id}", response_model=models.BlockchainRecordWithDetails, tags=["区块链记录"])
+def read_blockchain_record_detail(
+    record_id: int,
+    db: Session = Depends(get_db)
+):
+    """获取区块链记录详情"""
+    record = db.get(models.BlockchainRecord, record_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="区块链记录不存在")
+    return record
+
+# 用户贡献统计API
+@app.get("/users/{user_id}/contribution-stats", tags=["用户"])
+def read_user_contribution_stats(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """获取用户贡献统计信息"""
+    profile = crud.get_contributor_profile(db, user_id)
+    contributions = crud.get_github_contributions(db, user_id=user_id, limit=1000)
+    blockchain_records = crud.get_blockchain_records_by_user(db, user_id=user_id, limit=1000)
+    
+    # 统计不同类型贡献
+    contribution_types = {}
+    for contrib in contributions:
+        contrib_type = contrib.contribution_type.value
+        if contrib_type not in contribution_types:
+            contribution_types[contrib_type] = {"count": 0, "points": 0}
+        contribution_types[contrib_type]["count"] += 1
+        contribution_types[contrib_type]["points"] += contrib.contribution_points
+    
+    # 最近贡献活动
+    recent_contributions = contributions[:10]
+    
+    # 区块链确权记录
+    confirmed_records = [r for r in blockchain_records if r.is_confirmed]
+    
+    return {
+        "profile": profile,
+        "total_contributions": len(contributions),
+        "total_points": sum(c.contribution_points for c in contributions),
+        "total_blockchain_records": len(confirmed_records),
+        "contribution_types": contribution_types,
+        "recent_contributions": [
+            {
+                "id": c.id,
+                "title": c.issue_title,
+                "type": c.contribution_type.value,
+                "points": c.contribution_points,
+                "status": c.status.value,
+                "created_at": c.github_created_at.isoformat(),
+                "blockchain_hash": c.blockchain_hash,
+                "is_on_chain": bool(c.blockchain_hash)
+            } for c in recent_contributions
+        ],
+        "blockchain_records": [
+            {
+                "id": r.id,
+                "transaction_hash": r.transaction_hash,
+                "block_number": r.block_number,
+                "points_amount": r.points_amount,
+                "description": r.description,
+                "confirmed_at": r.confirmed_at.isoformat() if r.confirmed_at else None
+            } for r in confirmed_records
+        ]
+    }

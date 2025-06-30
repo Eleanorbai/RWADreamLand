@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 from . import models
 from .utils import get_password_hash, verify_password
@@ -789,6 +789,71 @@ def accept_github_contribution(db: Session, contribution_id: int, user_id: Optio
         db.commit()
         db.refresh(db_contribution)
     return db_contribution
+
+def reject_github_contribution(db: Session, contribution_id: int, reason: Optional[str] = None) -> Optional[models.GitHubContribution]:
+    """拒绝GitHub贡献"""
+    db_contribution = db.get(models.GitHubContribution, contribution_id)
+    if db_contribution and db_contribution.status == models.ContributionStatus.PENDING:
+        db_contribution.status = models.ContributionStatus.REJECTED
+        # 可以添加拒绝原因字段到模型中
+        db.add(db_contribution)
+        db.commit()
+        db.refresh(db_contribution)
+    return db_contribution
+
+def get_github_contributions_list(
+    db: Session,
+    project_id: Optional[int] = None,
+    status: Optional[models.ContributionStatus] = None,
+    github_username: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[models.GitHubContribution]:
+    """获取GitHub贡献列表"""
+    query = db.query(models.GitHubContribution)
+    
+    if project_id:
+        query = query.filter(models.GitHubContribution.project_id == project_id)
+    if status:
+        query = query.filter(models.GitHubContribution.status == status)
+    if github_username:
+        query = query.filter(models.GitHubContribution.github_username.ilike(f"%{github_username}%"))
+    
+    return query.order_by(models.GitHubContribution.created_at.desc()).offset(skip).limit(limit).all()
+
+def get_github_contributions_stats(db: Session) -> Dict[str, Any]:
+    """获取GitHub贡献统计"""
+    total_contributions = db.query(models.GitHubContribution).count()
+    pending_contributions = db.query(models.GitHubContribution).filter(
+        models.GitHubContribution.status == models.ContributionStatus.PENDING
+    ).count()
+    accepted_contributions = db.query(models.GitHubContribution).filter(
+        models.GitHubContribution.status == models.ContributionStatus.ACCEPTED
+    ).count()
+    rejected_contributions = db.query(models.GitHubContribution).filter(
+        models.GitHubContribution.status == models.ContributionStatus.REJECTED
+    ).count()
+    
+    total_points = db.query(
+        db.func.sum(models.GitHubContribution.contribution_points)
+    ).filter(
+        models.GitHubContribution.status == models.ContributionStatus.ACCEPTED
+    ).scalar() or 0
+    
+    on_chain_contributions = db.query(models.GitHubContribution).filter(
+        models.GitHubContribution.blockchain_hash.isnot(None)
+    ).count()
+    
+    return {
+        "total_contributions": total_contributions,
+        "pending_contributions": pending_contributions,
+        "accepted_contributions": accepted_contributions,
+        "rejected_contributions": rejected_contributions,
+        "total_points": total_points,
+        "on_chain_contributions": on_chain_contributions,
+        "acceptance_rate": round(accepted_contributions / total_contributions * 100, 2) if total_contributions > 0 else 0,
+        "on_chain_rate": round(on_chain_contributions / accepted_contributions * 100, 2) if accepted_contributions > 0 else 0
+    }
 
 # 贡献者资料相关操作
 def create_contributor_profile(db: Session, user_id: int, profile: models.ContributorProfileCreate) -> models.ContributorProfile:
