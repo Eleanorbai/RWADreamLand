@@ -431,6 +431,124 @@ export default function Origin() {
             </Card>
           </div>
 
+          {/* RWA星球共创项目 - 特殊置顶项目 */}
+          <Card className="border-2 border-gradient-to-r from-blue-500 to-purple-600 bg-gradient-to-r from-blue-50 to-purple-50 hover:shadow-xl transition-all duration-300">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      🌟 官方项目
+                    </Badge>
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      持续招募
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-xl mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    RWA星球共创项目
+                  </CardTitle>
+                  <p className="text-gray-700 text-sm mb-3">
+                    基于GitHub开源协作的RWA平台功能完善项目。通过提交Issue、改进建议获得链上积分奖励，成为平台核心贡献者。
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              {/* 项目统计 */}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">GitHub</div>
+                  <div className="text-xs text-gray-500">开源协作</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">链上</div>
+                  <div className="text-xs text-gray-500">积分确权</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">共创</div>
+                  <div className="text-xs text-gray-500">平台进化</div>
+                </div>
+              </div>
+
+              {/* 参与方式 */}
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <h4 className="font-medium text-sm mb-3 text-gray-800">💡 参与方式</h4>
+                <div className="space-y-2 text-xs text-gray-600">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>在GitHub提交Bug报告、功能建议</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>代码贡献、文档完善、UI/UX改进</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>获得链上积分，成为核心贡献者</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 积分奖励 */}
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-4">
+                <h4 className="font-medium text-sm mb-3 text-gray-800">🎯 积分奖励</h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex justify-between">
+                    <span>Bug报告</span>
+                    <span className="font-bold text-orange-600">+10分</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>功能建议</span>
+                    <span className="font-bold text-orange-600">+15分</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>文档完善</span>
+                    <span className="font-bold text-orange-600">+20分</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>代码贡献</span>
+                    <span className="font-bold text-orange-600">+50分</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 项目信息 */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src="https://github.com/Eleanorbai.png" />
+                    <AvatarFallback>RWA</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium text-sm">RWA星球团队</div>
+                    <div className="text-gray-500 text-xs">平台官方维护</div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open('https://github.com/Eleanorbai/RWADreamLand.git', '_blank')}
+                    className="text-xs"
+                  >
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
+                    </svg>
+                    GitHub
+                  </Button>
+                  <Button 
+                    size="sm"
+                    onClick={() => navigate('/open-source/1')}
+                    className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                  >
+                    查看详情
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* 项目列表 */}
           {filteredProjects.length === 0 ? (
             <div className="text-center py-12">

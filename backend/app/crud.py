@@ -683,3 +683,228 @@ def update_blockchain_record_confirmation(db: Session, record_id: int, transacti
         db.commit()
         db.refresh(db_record)
     return db_record
+
+# RWA星球共创项目 CRUD 操作
+
+# 开源项目相关操作
+def create_open_project(db: Session, project: models.OpenProjectCreate) -> models.OpenProject:
+    db_project = models.OpenProject(**project.model_dump())
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+def get_open_project(db: Session, project_id: int) -> Optional[models.OpenProject]:
+    return db.get(models.OpenProject, project_id)
+
+def get_open_project_by_repo(db: Session, github_repo: str) -> Optional[models.OpenProject]:
+    statement = select(models.OpenProject).where(models.OpenProject.github_repo == github_repo)
+    return db.exec(statement).first()
+
+def get_open_projects(db: Session, skip: int = 0, limit: int = 100, is_active: Optional[bool] = None) -> List[models.OpenProject]:
+    statement = select(models.OpenProject)
+    if is_active is not None:
+        statement = statement.where(models.OpenProject.is_active == is_active)
+    statement = statement.offset(skip).limit(limit).order_by(models.OpenProject.created_at.desc())
+    return db.exec(statement).all()
+
+def update_open_project(db: Session, project_id: int, project_update: models.OpenProjectUpdate) -> Optional[models.OpenProject]:
+    db_project = db.get(models.OpenProject, project_id)
+    if db_project:
+        update_data = project_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_project, field, value)
+        db_project.updated_at = datetime.utcnow()
+        db.add(db_project)
+        db.commit()
+        db.refresh(db_project)
+    return db_project
+
+def delete_open_project(db: Session, project_id: int) -> bool:
+    db_project = db.get(models.OpenProject, project_id)
+    if db_project:
+        db.delete(db_project)
+        db.commit()
+        return True
+    return False
+
+# GitHub贡献记录相关操作
+def create_github_contribution(db: Session, contribution: models.GitHubContributionCreate) -> models.GitHubContribution:
+    db_contribution = models.GitHubContribution(**contribution.model_dump())
+    db.add(db_contribution)
+    db.commit()
+    db.refresh(db_contribution)
+    return db_contribution
+
+def get_github_contribution(db: Session, contribution_id: int) -> Optional[models.GitHubContribution]:
+    return db.get(models.GitHubContribution, contribution_id)
+
+def get_github_contribution_by_issue(db: Session, project_id: int, issue_number: int) -> Optional[models.GitHubContribution]:
+    statement = select(models.GitHubContribution).where(
+        models.GitHubContribution.project_id == project_id,
+        models.GitHubContribution.issue_number == issue_number
+    )
+    return db.exec(statement).first()
+
+def get_github_contributions(db: Session, project_id: Optional[int] = None, user_id: Optional[int] = None, 
+                           status: Optional[models.ContributionStatus] = None, skip: int = 0, limit: int = 100) -> List[models.GitHubContribution]:
+    statement = select(models.GitHubContribution)
+    if project_id:
+        statement = statement.where(models.GitHubContribution.project_id == project_id)
+    if user_id:
+        statement = statement.where(models.GitHubContribution.user_id == user_id)
+    if status:
+        statement = statement.where(models.GitHubContribution.status == status)
+    statement = statement.offset(skip).limit(limit).order_by(models.GitHubContribution.created_at.desc())
+    return db.exec(statement).all()
+
+def update_github_contribution(db: Session, contribution_id: int, contribution_update: models.GitHubContributionUpdate) -> Optional[models.GitHubContribution]:
+    db_contribution = db.get(models.GitHubContribution, contribution_id)
+    if db_contribution:
+        update_data = contribution_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_contribution, field, value)
+        db_contribution.updated_at = datetime.utcnow()
+        db.add(db_contribution)
+        db.commit()
+        db.refresh(db_contribution)
+    return db_contribution
+
+def accept_github_contribution(db: Session, contribution_id: int, user_id: Optional[int] = None) -> Optional[models.GitHubContribution]:
+    """接受GitHub贡献，更新状态并分配积分"""
+    db_contribution = db.get(models.GitHubContribution, contribution_id)
+    if db_contribution and db_contribution.status == models.ContributionStatus.PENDING:
+        db_contribution.status = models.ContributionStatus.ACCEPTED
+        db_contribution.accepted_at = datetime.utcnow()
+        
+        if user_id:
+            db_contribution.user_id = user_id
+            # 给用户加积分
+            add_user_points(db, user_id, db_contribution.contribution_points)
+            
+            # 更新贡献者资料
+            update_contributor_stats(db, user_id, db_contribution.contribution_points)
+        
+        db.add(db_contribution)
+        db.commit()
+        db.refresh(db_contribution)
+    return db_contribution
+
+# 贡献者资料相关操作
+def create_contributor_profile(db: Session, user_id: int, profile: models.ContributorProfileCreate) -> models.ContributorProfile:
+    db_profile = models.ContributorProfile(**profile.model_dump(), user_id=user_id)
+    db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
+def get_contributor_profile(db: Session, user_id: int) -> Optional[models.ContributorProfile]:
+    statement = select(models.ContributorProfile).where(models.ContributorProfile.user_id == user_id)
+    return db.exec(statement).first()
+
+def get_contributor_profile_by_github(db: Session, github_username: str) -> Optional[models.ContributorProfile]:
+    statement = select(models.ContributorProfile).where(models.ContributorProfile.github_username == github_username)
+    return db.exec(statement).first()
+
+def update_contributor_profile(db: Session, user_id: int, profile_update: models.ContributorProfileUpdate) -> Optional[models.ContributorProfile]:
+    db_profile = get_contributor_profile(db, user_id)
+    if db_profile:
+        update_data = profile_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_profile, field, value)
+        db_profile.updated_at = datetime.utcnow()
+        db.add(db_profile)
+        db.commit()
+        db.refresh(db_profile)
+    return db_profile
+
+def update_contributor_stats(db: Session, user_id: int, points: int) -> Optional[models.ContributorProfile]:
+    """更新贡献者统计信息"""
+    db_profile = get_contributor_profile(db, user_id)
+    if db_profile:
+        db_profile.total_contributions += 1
+        db_profile.total_points += points
+        # 简单的声誉计算：总积分 * 0.6 + 贡献数量 * 0.4
+        db_profile.reputation_score = db_profile.total_points * 0.6 + db_profile.total_contributions * 0.4
+        db_profile.updated_at = datetime.utcnow()
+        db.add(db_profile)
+        db.commit()
+        db.refresh(db_profile)
+    return db_profile
+
+def get_contributor_rankings(db: Session, limit: int = 50) -> List[models.ContributorRanking]:
+    """获取贡献者排行榜"""
+    statement = select(models.ContributorProfile).order_by(
+        models.ContributorProfile.reputation_score.desc(),
+        models.ContributorProfile.total_points.desc()
+    ).limit(limit)
+    
+    profiles = db.exec(statement).all()
+    rankings = []
+    for rank, profile in enumerate(profiles, 1):
+        ranking = models.ContributorRanking(
+            user_id=profile.user_id,
+            github_username=profile.github_username,
+            total_points=profile.total_points,
+            total_contributions=profile.total_contributions,
+            reputation_score=profile.reputation_score,
+            rank=rank
+        )
+        rankings.append(ranking)
+    
+    return rankings
+
+def get_project_stats(db: Session, project_id: int) -> Optional[models.ProjectStats]:
+    """获取项目统计信息"""
+    project = get_open_project(db, project_id)
+    if not project:
+        return None
+    
+    # 获取项目所有贡献
+    contributions = get_github_contributions(db, project_id=project_id, limit=10000)
+    
+    total_contributions = len(contributions)
+    total_points = sum(c.contribution_points for c in contributions)
+    
+    # 统计贡献者数量
+    contributors = set(c.user_id for c in contributions if c.user_id)
+    total_contributors = len(contributors)
+    
+    # 统计各类型贡献
+    contribution_types = {}
+    for contribution in contributions:
+        contrib_type = contribution.contribution_type.value
+        if contrib_type not in contribution_types:
+            contribution_types[contrib_type] = 0
+        contribution_types[contrib_type] += 1
+    
+    # 获取顶级贡献者
+    top_contributors = []
+    if contributors:
+        contrib_stats = {}
+        for contribution in contributions:
+            if contribution.user_id:
+                if contribution.user_id not in contrib_stats:
+                    contrib_stats[contribution.user_id] = {"points": 0, "count": 0}
+                contrib_stats[contribution.user_id]["points"] += contribution.contribution_points
+                contrib_stats[contribution.user_id]["count"] += 1
+        
+        # 排序并取前10
+        sorted_contributors = sorted(contrib_stats.items(), key=lambda x: x[1]["points"], reverse=True)[:10]
+        for user_id, stats in sorted_contributors:
+            profile = get_contributor_profile(db, user_id)
+            top_contributors.append({
+                "user_id": user_id,
+                "github_username": profile.github_username if profile else "Unknown",
+                "points": stats["points"],
+                "contributions": stats["count"]
+            })
+    
+    return models.ProjectStats(
+        project_id=project_id,
+        total_contributions=total_contributions,
+        total_contributors=total_contributors,
+        total_points=total_points,
+        contribution_types=contribution_types,
+        top_contributors=top_contributors
+    )

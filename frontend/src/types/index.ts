@@ -6,6 +6,7 @@ export * from './group';
 export * from './discussion';
 export * from './message';
 export * from './blockchain';
+export * from './opensource';
 
 // 通用响应类型
 export interface ApiResponse<T> {
@@ -32,3 +33,4 @@ export interface ErrorResponse {
   detail: string;
   message?: string;
 }
+

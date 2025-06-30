@@ -13,7 +13,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from app.database import create_tables, engine
-from app.models import User, Tag, UserRole
+from app.models import User, Tag, UserRole, OpenProject
 from app.utils import get_password_hash
 from sqlmodel import Session, select
 
@@ -88,6 +88,19 @@ def create_initial_data():
                     tag = Tag(**tag_data)
                     db.add(tag)
                     print(f"✅ 创建标签: {tag_data['name']}")
+            
+            # 创建RWA星球共创项目
+            statement = select(OpenProject).where(OpenProject.name == "RWA星球共创项目")
+            rwa_project = db.exec(statement).first()
+            if not rwa_project:
+                rwa_project = OpenProject(
+                    name="RWA星球共创项目",
+                    github_repo="https://github.com/Eleanorbai/RWADreamLand.git",
+                    description="基于GitHub开源协作的RWA平台功能完善项目。通过提交Issue、改进建议获得链上积分奖励，成为平台核心贡献者。",
+                    is_active=True
+                )
+                db.add(rwa_project)
+                print("✅ 创建RWA星球共创项目")
             
             # 提交所有更改
             db.commit()

@@ -608,3 +608,161 @@ class PlatformStats(SQLModel):
     active_users_today: int
     active_users_week: int
     popular_tags: List[dict]  # {"tag_name": str, "usage_count": int}
+
+# RWA星球共创项目相关模型
+
+class ContributorType(str, Enum):
+    INDIVIDUAL = "individual"  # 个人
+    ORGANIZATION = "organization"  # 企业/组织
+
+class ContributionType(str, Enum):
+    BUG_REPORT = "bug_report"
+    FEATURE_REQUEST = "feature_request"
+    DOCUMENTATION = "documentation"
+    CODE_CONTRIBUTION = "code_contribution"
+    CRITICAL_FIX = "critical_fix"
+    UI_UX_IMPROVEMENT = "ui_ux_improvement"
+    TESTING = "testing"
+    OTHER = "other"
+
+class ContributionStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    IN_PROGRESS = "in_progress"
+
+class VerificationStatus(str, Enum):
+    UNVERIFIED = "unverified"
+    PENDING = "pending"
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+
+# 开源项目基础模型
+class OpenProjectBase(SQLModel):
+    name: str = Field(max_length=100)
+    github_repo: str = Field(max_length=200)
+    description: Optional[str] = Field(default=None)
+    contract_address: Optional[str] = Field(default=None, max_length=66)
+    is_active: bool = Field(default=True)
+
+class OpenProject(OpenProjectBase, table=True):
+    __tablename__ = "open_projects"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
+    # 关联关系
+    contributions: List["GitHubContribution"] = Relationship(back_populates="project")
+
+class OpenProjectCreate(OpenProjectBase):
+    pass
+
+class OpenProjectUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    contract_address: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class OpenProjectPublic(OpenProjectBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+# GitHub贡献记录基础模型
+class GitHubContributionBase(SQLModel):
+    github_username: str = Field(max_length=100)
+    issue_number: int
+    issue_title: str = Field(max_length=200)
+    issue_url: str = Field(max_length=500)
+    contribution_type: ContributionType
+    contribution_points: int = Field(default=0)
+    status: ContributionStatus = Field(default=ContributionStatus.PENDING)
+    github_created_at: datetime
+    accepted_at: Optional[datetime] = None
+    blockchain_hash: Optional[str] = Field(default=None, max_length=66)
+
+class GitHubContribution(GitHubContributionBase, table=True):
+    __tablename__ = "github_contributions"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="open_projects.id")
+    user_id: Optional[int] = Field(default=None, foreign_key="users.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
+    # 关联关系
+    project: Optional[OpenProject] = Relationship(back_populates="contributions")
+    user: Optional["User"] = Relationship()
+
+class GitHubContributionCreate(GitHubContributionBase):
+    project_id: int
+
+class GitHubContributionUpdate(SQLModel):
+    status: Optional[ContributionStatus] = None
+    contribution_points: Optional[int] = None
+    user_id: Optional[int] = None
+    accepted_at: Optional[datetime] = None
+    blockchain_hash: Optional[str] = None
+
+class GitHubContributionPublic(GitHubContributionBase):
+    id: int
+    project_id: int
+    user_id: Optional[int] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+class GitHubContributionWithDetails(GitHubContributionPublic):
+    project: Optional[OpenProjectPublic] = None
+    user: Optional["UserPublic"] = None
+
+# 贡献者身份基础模型
+class ContributorProfileBase(SQLModel):
+    github_username: str = Field(max_length=100, unique=True)
+    contributor_type: ContributorType
+    organization_name: Optional[str] = Field(default=None, max_length=200)
+    verification_status: VerificationStatus = Field(default=VerificationStatus.UNVERIFIED)
+    total_contributions: int = Field(default=0)
+    total_points: int = Field(default=0)
+    reputation_score: float = Field(default=0.0)
+
+class ContributorProfile(ContributorProfileBase, table=True):
+    __tablename__ = "contributor_profiles"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
+    # 关联关系
+    user: Optional["User"] = Relationship()
+
+class ContributorProfileCreate(ContributorProfileBase):
+    pass
+
+class ContributorProfileUpdate(SQLModel):
+    contributor_type: Optional[ContributorType] = None
+    organization_name: Optional[str] = None
+    verification_status: Optional[VerificationStatus] = None
+
+class ContributorProfilePublic(ContributorProfileBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+class ContributorProfileWithDetails(ContributorProfilePublic):
+    user: Optional["UserPublic"] = None
+
+# GitHub项目统计
+class ProjectStats(SQLModel):
+    project_id: int
+    total_contributions: int
+    total_contributors: int
+    total_points: int
+    contribution_types: dict  # 各类型贡献统计
+    top_contributors: List[dict]  # 顶级贡献者
+
+# 贡献排行榜
+class ContributorRanking(SQLModel):
+    user_id: int
+    github_username: str
+    total_points: int
+    total_contributions: int
+    reputation_score: float
+    rank: int
+    user: Optional["UserPublic"] = None

@@ -64,6 +64,24 @@ class Settings(BaseSettings):
     points_contract_address: str = os.getenv("POINTS_CONTRACT_ADDRESS", "")
     contribution_contract_address: str = os.getenv("CONTRIBUTION_CONTRACT_ADDRESS", "")
     
+    # GitHub集成配置
+    github_enabled: bool = os.getenv("GITHUB_ENABLED", "False").lower() == "true"
+    github_token: str = os.getenv("GITHUB_TOKEN", "")
+    github_webhook_secret: str = os.getenv("GITHUB_WEBHOOK_SECRET", "")
+    github_default_repo: str = os.getenv("GITHUB_DEFAULT_REPO", "https://github.com/Eleanorbai/RWADreamLand.git")
+    
+    # GitHub贡献积分配置
+    contribution_points: dict = {
+        "bug_report": 10,
+        "feature_request": 15,
+        "documentation": 20,
+        "code_contribution": 50,
+        "critical_fix": 100,
+        "ui_ux_improvement": 25,
+        "testing": 15,
+        "other": 5
+    }
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

@@ -25,8 +25,9 @@ aiofiles==24.1.0
 # 其他工具
 rich==14.0.0
 typing-extensions==4.14.0
+requests==2.32.3
 
 # 区块链相关（可选，用于FISCO BCOS集成）
 # eth-account==0.12.4
-# web3==7.7.0
-# python-eth-utils==5.1.1
+web3==7.7.0
+eth-utils==5.3.0

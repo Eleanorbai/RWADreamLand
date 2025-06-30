@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Body
+from fastapi import FastAPI, Depends, HTTPException, status, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from typing import List, Optional
 import os
+import json
+import logging
 
 from .auth import router as auth_router, get_current_active_user, require_role
 from .database import get_db, init_db
@@ -11,6 +13,8 @@ from .config import settings
 from . import crud, models
 from .utils import verify_password, get_password_hash
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -768,3 +772,216 @@ def change_password(
     db.add(current_user)
     db.commit()
     return {"msg": "密码修改成功"}
+
+# RWA星球共创项目相关路由
+
+# 开源项目管理路由
+@app.post("/open-projects", response_model=models.OpenProjectPublic, tags=["开源项目"])
+def create_open_project(
+    project: models.OpenProjectCreate,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    return crud.create_open_project(db=db, project=project)
+
+@app.get("/open-projects", response_model=List[models.OpenProjectPublic], tags=["开源项目"])
+def read_open_projects(
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
+    return crud.get_open_projects(db, skip=skip, limit=limit, is_active=is_active)
+
+@app.get("/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
+def read_open_project(
+    project_id: int,
+    db: Session = Depends(get_db)
+):
+    project = crud.get_open_project(db, project_id=project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    return project
+
+@app.put("/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
+def update_open_project(
+    project_id: int,
+    project_update: models.OpenProjectUpdate,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    project = crud.update_open_project(db, project_id=project_id, project_update=project_update)
+    if project is None:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    return project
+
+@app.delete("/open-projects/{project_id}", tags=["开源项目"])
+def delete_open_project(
+    project_id: int,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN])),
+    db: Session = Depends(get_db)
+):
+    success = crud.delete_open_project(db, project_id=project_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    return {"msg": "项目删除成功"}
+
+# GitHub贡献相关路由
+@app.get("/github-contributions", response_model=List[models.GitHubContributionWithDetails], tags=["GitHub贡献"])
+def read_github_contributions(
+    project_id: Optional[int] = None,
+    user_id: Optional[int] = None,
+    status: Optional[models.ContributionStatus] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    return crud.get_github_contributions(
+        db, project_id=project_id, user_id=user_id, status=status, skip=skip, limit=limit
+    )
+
+@app.get("/github-contributions/{contribution_id}", response_model=models.GitHubContributionWithDetails, tags=["GitHub贡献"])
+def read_github_contribution(
+    contribution_id: int,
+    db: Session = Depends(get_db)
+):
+    contribution = crud.get_github_contribution(db, contribution_id=contribution_id)
+    if contribution is None:
+        raise HTTPException(status_code=404, detail="贡献记录不存在")
+    return contribution
+
+@app.put("/github-contributions/{contribution_id}/accept", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
+def accept_github_contribution(
+    contribution_id: int,
+    user_id: Optional[int] = None,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    contribution = crud.accept_github_contribution(db, contribution_id=contribution_id, user_id=user_id)
+    if contribution is None:
+        raise HTTPException(status_code=404, detail="贡献记录不存在或已处理")
+    
+    # 记录区块链
+    try:
+        from .blockchain import record_user_points
+        if contribution.user_id:
+            blockchain_record = record_user_points(
+                user_id=contribution.user_id,
+                points=contribution.contribution_points,
+                action=models.BlockchainAction.CONTRIBUTION_RECORD,
+                description=f"GitHub贡献确认: {contribution.issue_title}"
+            )
+            if blockchain_record:
+                crud.create_blockchain_record(db, blockchain_record, contribution.user_id)
+                # 更新贡献记录的区块链哈希
+                update_data = models.GitHubContributionUpdate(
+                    blockchain_hash=blockchain_record.transaction_hash
+                )
+                crud.update_github_contribution(db, contribution_id, update_data)
+    except Exception as e:
+        logger.error(f"区块链记录失败: {e}")
+    
+    return contribution
+
+# GitHub Webhook端点
+@app.post("/github/webhook", tags=["GitHub集成"])
+async def github_webhook(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    from .github_service import github_service
+    
+    # 获取请求体
+    payload_body = await request.body()
+    
+    # 验证签名
+    signature = request.headers.get("X-Hub-Signature-256", "")
+    if not github_service.verify_webhook_signature(payload_body, signature):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+    
+    # 获取事件类型
+    event_type = request.headers.get("X-GitHub-Event", "")
+    
+    # 解析JSON载荷
+    try:
+        payload = json.loads(payload_body.decode('utf-8'))
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+    
+    # 处理事件
+    result = github_service.process_webhook_event(event_type, payload, db)
+    
+    return {"status": "processed", "contribution_id": result.id if result else None}
+
+@app.post("/github/sync/{project_id}", tags=["GitHub集成"])
+def sync_github_contributions(
+    project_id: int,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    from .github_service import github_service
+    
+    synced_count = github_service.sync_project_contributions(project_id, db)
+    return {"msg": f"同步完成，新增 {synced_count} 条贡献记录"}
+
+# 贡献者管理路由
+@app.post("/contributor-profile", response_model=models.ContributorProfilePublic, tags=["贡献者"])
+def create_contributor_profile(
+    profile: models.ContributorProfileCreate,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 检查是否已存在
+    existing_profile = crud.get_contributor_profile(db, current_user.id)
+    if existing_profile:
+        raise HTTPException(status_code=400, detail="贡献者资料已存在")
+    
+    return crud.create_contributor_profile(db=db, user_id=current_user.id, profile=profile)
+
+@app.get("/contributor-profile", response_model=models.ContributorProfileWithDetails, tags=["贡献者"])
+def read_my_contributor_profile(
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    profile = crud.get_contributor_profile(db, current_user.id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="贡献者资料不存在")
+    return profile
+
+@app.put("/contributor-profile", response_model=models.ContributorProfilePublic, tags=["贡献者"])
+def update_my_contributor_profile(
+    profile_update: models.ContributorProfileUpdate,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    profile = crud.update_contributor_profile(db, user_id=current_user.id, profile_update=profile_update)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="贡献者资料不存在")
+    return profile
+
+@app.get("/contributors/rankings", response_model=List[models.ContributorRanking], tags=["贡献者"])
+def read_contributor_rankings(
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    return crud.get_contributor_rankings(db, limit=limit)
+
+@app.get("/contributors/{user_id}/contributions", response_model=List[models.GitHubContributionPublic], tags=["贡献者"])
+def read_user_contributions(
+    user_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    return crud.get_github_contributions(db, user_id=user_id, skip=skip, limit=limit)
+
+# 项目统计路由
+@app.get("/open-projects/{project_id}/stats", response_model=models.ProjectStats, tags=["开源项目"])
+def read_project_stats(
+    project_id: int,
+    db: Session = Depends(get_db)
+):
+    stats = crud.get_project_stats(db, project_id)
+    if stats is None:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    return stats
