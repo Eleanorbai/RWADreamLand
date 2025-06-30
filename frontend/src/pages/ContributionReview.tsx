@@ -68,6 +68,18 @@ const statusColors = {
   'rejected': 'bg-red-100 text-red-800'
 };
 
+function useContributionNotification(onNew: () => void) {
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:8000/ws/notifications");
+    ws.onmessage = (event) => {
+      if (event.data === "new_contribution") {
+        onNew();
+      }
+    };
+    return () => ws.close();
+  }, [onNew]);
+}
+
 export default function ContributionReview() {
   const [contributions, setContributions] = useState<GitHubContribution[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -82,6 +94,11 @@ export default function ContributionReview() {
     loadContributions();
     loadUsers();
   }, []);
+
+  useContributionNotification(() => {
+    toast({ title: "有新的贡献待审核", description: "请及时处理。" });
+    loadContributions(); // 触发刷新
+  });
 
   const loadContributions = async () => {
     try {

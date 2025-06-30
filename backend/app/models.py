@@ -766,3 +766,12 @@ class ContributorRanking(SQLModel):
     reputation_score: float
     rank: int
     user: Optional["UserPublic"] = None
+
+class Notification(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    user_id: int
+    title: str
+    content: str
+    type: str = "contribution_review"
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)

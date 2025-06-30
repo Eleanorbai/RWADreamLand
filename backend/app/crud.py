@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from . import models
 from .utils import get_password_hash, verify_password
+from .notification import notify_reviewers_new_contribution
 
 # 用户相关 CRUD 操作
 def get_user(db: Session, user_id: int) -> Optional[models.User]:
@@ -734,6 +735,8 @@ def create_github_contribution(db: Session, contribution: models.GitHubContribut
     db.add(db_contribution)
     db.commit()
     db.refresh(db_contribution)
+    # 新增：通知审核员
+    notify_reviewers_new_contribution(db, db_contribution.issue_title, db_contribution.id)
     return db_contribution
 
 def get_github_contribution(db: Session, contribution_id: int) -> Optional[models.GitHubContribution]:
