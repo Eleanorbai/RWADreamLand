@@ -1,0 +1,32 @@
+# FastAPI 和相关依赖
+fastapi==0.115.13
+fastapi-cli==0.0.7
+uvicorn==0.34.3
+python-multipart==0.0.20
+
+# 数据库相关
+sqlmodel==0.0.24
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+
+# 认证和安全
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.5.0
+python-dotenv==1.1.1
+
+# 验证和设置
+pydantic==2.11.7
+pydantic-settings==2.10.1
+email-validator==2.2.0
+
+# 文件上传
+aiofiles==24.1.0
+
+# 其他工具
+rich==14.0.0
+typing-extensions==4.14.0
+
+# 区块链相关（可选，用于FISCO BCOS集成）
+# eth-account==0.12.4
+# web3==7.7.0
+# python-eth-utils==5.1.1
