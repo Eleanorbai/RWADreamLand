@@ -10,7 +10,14 @@ import {
   Award,
   FileText,
   LogOut,
-  Send
+  Send,
+  Shield,
+  GitBranch,
+  TrendingUp,
+  Link,
+  CheckCircle,
+  Building,
+  Users
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 import { User, UserRole } from '../types/user';
-import { userApi } from '../lib/api';
+import { userApi, openSourceApi } from '../lib/api';
 import { noteApi } from '../lib/api';
 import { getRoleDisplayName, getRoleColorClass } from '../lib/roleUtils';
 import ReactMarkdown from 'react-markdown';
@@ -43,6 +50,10 @@ export default function Me({}: MePageProps) {
   const [editMode, setEditMode] = useState(false);
   const [currentNote, setCurrentNote] = useState<{ id: number | null, title: string, content: string }>({ id: null, title: '', content: '' });
   const [noteMsg, setNoteMsg] = useState('');
+  
+  // 新增状态：贡献统计
+  const [contributionStats, setContributionStats] = useState<any>(null);
+  const [contributionLoading, setContributionLoading] = useState(true);
 
   useEffect(() => {
     loadUserData();
@@ -55,6 +66,19 @@ export default function Me({}: MePageProps) {
       const userData = await userApi.getCurrentUser();
       console.log('userData:', userData);
       setUser(userData);
+      
+      // 加载贡献统计数据
+      if (userData.id) {
+        try {
+          setContributionLoading(true);
+          const stats = await openSourceApi.getUserContributionStats(userData.id);
+          setContributionStats(stats);
+        } catch (err) {
+          console.log('Failed to load contribution stats:', err);
+        } finally {
+          setContributionLoading(false);
+        }
+      }
     } catch (err: any) {
       console.log('getCurrentUser error:', err);
       const errorMessage = err.response?.data?.detail || '获取用户信息失败';
@@ -523,6 +547,181 @@ export default function Me({}: MePageProps) {
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl font-bold text-gray-900">{user.points}</div>
                     <div className="text-sm text-gray-600">总积分</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* GitHub贡献统计 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GitBranch className="h-5 w-5 text-green-600" />
+                  GitHub贡献统计
+                </CardTitle>
+                <CardDescription>
+                  您在RWA星球项目中的贡献表现
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {contributionLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : contributionStats ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{contributionStats.total_contributions || 0}</div>
+                        <div className="text-sm text-gray-600">总贡献数</div>
+                      </div>
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{contributionStats.total_points || 0}</div>
+                        <div className="text-sm text-gray-600">贡献积分</div>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600">{contributionStats.on_chain_count || 0}</div>
+                        <div className="text-sm text-gray-600">已上链</div>
+                      </div>
+                      <div className="p-4 bg-orange-50 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {contributionStats.ranking || '-'}
+                        </div>
+                        <div className="text-sm text-gray-600">全球排名</div>
+                      </div>
+                    </div>
+                    
+                    {/* 贡献类型分布 */}
+                    <div className="mt-6">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">贡献类型分布</h4>
+                      <div className="space-y-2">
+                        {contributionStats.contribution_types && Object.entries(contributionStats.contribution_types).map(([type, count]) => (
+                          <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span className="text-sm text-gray-700">{type}</span>
+                            <span className="text-sm font-medium text-gray-900">{count as number}次</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>还没有GitHub贡献记录</p>
+                    <Button 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => window.open('https://github.com/Eleanorbai/RWADreamLand/issues/new', '_blank')}
+                    >
+                      立即参与贡献
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 区块链确权记录 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  区块链确权记录
+                </CardTitle>
+                <CardDescription>
+                  基于FISCO BCOS的贡献确权历史
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {contributionLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : contributionStats?.blockchain_records?.length > 0 ? (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {contributionStats.blockchain_records.map((record: any, index: number) => (
+                      <div key={record.id || index} className="flex items-center gap-3 p-3 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{record.title || record.action}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              +{record.points}分
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              {new Date(record.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Link className="h-3 w-3 text-blue-600" />
+                            <span className="text-xs text-blue-600 font-mono">
+                              {record.blockchain_hash?.slice(0, 10)}...{record.blockchain_hash?.slice(-8)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>还没有区块链确权记录</p>
+                    <p className="text-xs mt-1">参与GitHub贡献后将自动上链确权</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 参与方式指南 */}
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  参与RWA星球共创
+                </CardTitle>
+                <CardDescription>
+                  多种方式参与项目，获得积分奖励和链上确权
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold">1</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">提交Issue (20-50分)</p>
+                      <p className="text-xs text-gray-600">报告Bug、提出功能建议</p>
+                    </div>
+                    <Button size="sm" onClick={() => window.open('https://github.com/Eleanorbai/RWADreamLand/issues/new', '_blank')}>
+                      去提交
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white text-sm font-bold">2</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">提交PR (50-200分)</p>
+                      <p className="text-xs text-gray-600">代码贡献、文档完善</p>
+                    </div>
+                    <Button size="sm" onClick={() => window.open('https://github.com/Eleanorbai/RWADreamLand', '_blank')}>
+                      去贡献
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold">3</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">参与讨论 (10-30分)</p>
+                      <p className="text-xs text-gray-600">评论、回复、建设性讨论</p>
+                    </div>
+                    <Button size="sm" onClick={() => window.open('https://github.com/Eleanorbai/RWADreamLand/discussions', '_blank')}>
+                      去讨论
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800 font-medium">💡 企业参与</p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      企业可以通过官方GitHub账号参与，获得更高积分倍率和企业认证标识
+                    </p>
                   </div>
                 </div>
               </CardContent>

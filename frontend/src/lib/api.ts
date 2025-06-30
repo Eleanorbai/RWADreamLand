@@ -543,6 +543,24 @@ export const openSourceApi = {
     const response = await api.get(`/open-projects/${projectId}/stats`);
     return response.data;
   },
+
+  // 获取项目最近活动
+  getRecentActivities: async (projectId: number, limit = 20): Promise<any> => {
+    const response = await api.get(`/open-projects/${projectId}/recent-activities?limit=${limit}`);
+    return response.data;
+  },
+
+  // 获取用户贡献统计
+  getUserContributionStats: async (userId: number): Promise<any> => {
+    const response = await api.get(`/users/${userId}/contribution-stats`);
+    return response.data;
+  },
+
+  // 获取区块链记录详情
+  getBlockchainRecordDetail: async (recordId: number): Promise<any> => {
+    const response = await api.get(`/blockchain-records/${recordId}`);
+    return response.data;
+  },
 };
 
 // 导出默认api实例
