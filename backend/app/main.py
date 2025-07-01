@@ -13,6 +13,7 @@ from .config import settings
 from . import crud, models
 from .utils import verify_password, get_password_hash
 from pydantic import BaseModel
+from .notification import create_site_notification
 
 logger = logging.getLogger(__name__)
 
@@ -1127,3 +1128,185 @@ def read_user_contribution_stats(
             } for r in confirmed_records
         ]
     }
+
+# ========== 项目成员管理 ==========
+from fastapi import Path
+
+@app.get("/open-projects/{project_id}/members", tags=["项目成员"])
+def list_project_members(
+    project_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 公开项目所有人可查，私有项目仅成员可查
+    project = crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(404, "项目不存在")
+    if not project.is_public:
+        member = crud.get_member(db, project_id, current_user.id)
+        if not member:
+            raise HTTPException(403, "无权查看私有项目成员")
+    return crud.list_members(db, project_id)
+
+@app.post("/open-projects/{project_id}/members", tags=["项目成员"])
+def add_project_member(
+    project_id: int,
+    user_id: int = Body(...),
+    role: str = Body("MEMBER"),
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅管理员可添加
+    member = crud.get_member(db, project_id, current_user.id)
+    if not member or member.role != "ADMIN":
+        raise HTTPException(403, "仅项目管理员可添加成员")
+    return crud.add_member(db, project_id, user_id, role)
+
+@app.delete("/open-projects/{project_id}/members/{member_id}", tags=["项目成员"])
+def remove_project_member(
+    project_id: int,
+    member_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅管理员可删
+    member = crud.get_member(db, project_id, current_user.id)
+    if not member or member.role != "ADMIN":
+        raise HTTPException(403, "仅项目管理员可移除成员")
+    return {"success": crud.remove_member(db, member_id)}
+
+# ========== 项目邀请管理 ==========
+
+@app.post("/open-projects/{project_id}/invites", tags=["项目邀请"])
+def create_project_invite(
+    project_id: int,
+    invitee_id: int = Body(...),
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅管理员可邀请
+    member = crud.get_member(db, project_id, current_user.id)
+    if not member or member.role != "ADMIN":
+        raise HTTPException(403, "仅项目管理员可邀请成员")
+    invite = crud.create_invite(db, project_id, current_user.id, invitee_id)
+    # 通知被邀请人
+    project = crud.get_project(db, project_id)
+    create_site_notification(db, invitee_id, f"你被邀请加入项目{project.name}", f"请前往项目邀请页面处理。", type="project_invite")
+    return invite
+
+@app.get("/open-projects/{project_id}/invites", tags=["项目邀请"])
+def list_project_invites(
+    project_id: int,
+    status: Optional[str] = None,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅项目成员可查
+    member = crud.get_member(db, project_id, current_user.id)
+    if not member:
+        raise HTTPException(403, "仅项目成员可查看邀请")
+    return crud.list_invites(db, project_id, status)
+
+@app.post("/open-projects/{project_id}/invites/{invite_id}/approve", tags=["项目邀请"])
+def approve_project_invite(
+    project_id: int,
+    invite_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅被邀请人本人可操作
+    invite = crud.get_invite(db, invite_id)
+    if not invite or invite.project_id != project_id:
+        raise HTTPException(404, "邀请不存在")
+    if invite.invitee_id != current_user.id:
+        raise HTTPException(403, "仅被邀请人可操作")
+    if invite.status != "PENDING":
+        raise HTTPException(400, "邀请已处理")
+    # 更新邀请状态
+    crud.update_invite(db, invite_id, "APPROVED")
+    # 添加成员
+    crud.add_member(db, project_id, current_user.id, role="MEMBER")
+    # 通知邀请人
+    project = crud.get_project(db, project_id)
+    create_site_notification(db, invite.inviter_id, f"{current_user.username}已接受加入项目{project.name}", f"邀请已通过。", type="project_invite_result")
+    return {"success": True}
+
+@app.post("/open-projects/{project_id}/invites/{invite_id}/reject", tags=["项目邀请"])
+def reject_project_invite(
+    project_id: int,
+    invite_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅被邀请人本人可操作
+    invite = crud.get_invite(db, invite_id)
+    if not invite or invite.project_id != project_id:
+        raise HTTPException(404, "邀请不存在")
+    if invite.invitee_id != current_user.id:
+        raise HTTPException(403, "仅被邀请人可操作")
+    if invite.status != "PENDING":
+        raise HTTPException(400, "邀请已处理")
+    # 更新邀请状态
+    crud.update_invite(db, invite_id, "REJECTED")
+    # 通知邀请人
+    project = crud.get_project(db, project_id)
+    create_site_notification(db, invite.inviter_id, f"{current_user.username}拒绝加入项目{project.name}", f"邀请被拒绝。", type="project_invite_result")
+    return {"success": True}
+
+# ========== 项目标签管理 ==========
+
+@app.get("/project-tags", tags=["项目标签"])
+def list_project_tags(
+    db: Session = Depends(get_db)
+):
+    return crud.list_tags(db)
+
+@app.post("/project-tags", tags=["项目标签"])
+def create_project_tag(
+    name: str = Body(...),
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    db: Session = Depends(get_db)
+):
+    return crud.create_tag(db, name)
+
+@app.delete("/project-tags/{tag_id}", tags=["项目标签"])
+def delete_project_tag(
+    tag_id: int,
+    current_user: models.User = Depends(require_role([models.UserRole.ADMIN])),
+    db: Session = Depends(get_db)
+):
+    # 仅管理员可删
+    tag = db.get(models.ProjectTag, tag_id)
+    if not tag:
+        raise HTTPException(404, "标签不存在")
+    db.delete(tag)
+    db.commit()
+    return {"success": True}
+
+@app.post("/open-projects/{project_id}/tags/{tag_id}", tags=["项目标签"])
+def add_tag_to_project(
+    project_id: int,
+    tag_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅管理员可操作
+    member = crud.get_member(db, project_id, current_user.id)
+    if not member or member.role != "ADMIN":
+        raise HTTPException(403, "仅项目管理员可添加标签")
+    crud.add_tag_to_project(db, project_id, tag_id)
+    return {"success": True}
+
+@app.delete("/open-projects/{project_id}/tags/{tag_id}", tags=["项目标签"])
+def remove_tag_from_project(
+    project_id: int,
+    tag_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    # 仅管理员可操作
+    member = crud.get_member(db, project_id, current_user.id)
+    if not member or member.role != "ADMIN":
+        raise HTTPException(403, "仅项目管理员可移除标签")
+    crud.remove_tag_from_project(db, project_id, tag_id)
+    return {"success": True}
