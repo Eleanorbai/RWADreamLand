@@ -776,17 +776,20 @@ class Notification(SQLModel, table=True):
     is_read: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class ProjectTag(SQLModel, table=True):
-    __tablename__ = "project_tags"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(max_length=50, unique=True)
-    projects: List["OpenProject"] = Relationship(back_populates="tags", link_model="ProjectTagLink")
-
+# 先定义 ProjectTagLink
 class ProjectTagLink(SQLModel, table=True):
     __tablename__ = "project_tag_links"
     project_id: int = Field(foreign_key="openproject.id", primary_key=True)
     tag_id: int = Field(foreign_key="project_tags.id", primary_key=True)
 
+# 再定义 ProjectTag
+class ProjectTag(SQLModel, table=True):
+    __tablename__ = "project_tags"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=50, unique=True)
+    projects: List["OpenProject"] = Relationship(back_populates="tags", link_model=ProjectTagLink)
+
+# 再定义 OpenProject
 class OpenProject(SQLModel, table=True):
     __tablename__ = "openproject"
     id: Optional[int] = Field(default=None, primary_key=True)

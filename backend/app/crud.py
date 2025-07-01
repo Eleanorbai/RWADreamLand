@@ -973,3 +973,168 @@ def get_project_stats(db: Session, project_id: int) -> Optional[models.ProjectSt
         contribution_types=contribution_types,
         top_contributors=top_contributors
     )
+
+# OpenProject CRUD
+
+def create_project(db: Session, name: str, description: str, is_public: bool, creator_id: int, github_repo: Optional[str] = None) -> models.OpenProject:
+    project = models.OpenProject(
+        name=name,
+        description=description,
+        is_public=is_public,
+        creator_id=creator_id,
+        github_repo=github_repo,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+    # 创建者自动成为项目管理员
+    member = models.ProjectMember(
+        project_id=project.id,
+        user_id=creator_id,
+        role="ADMIN",
+        status="APPROVED"
+    )
+    db.add(member)
+    db.commit()
+    return project
+
+def get_project(db: Session, project_id: int) -> Optional[models.OpenProject]:
+    return db.get(models.OpenProject, project_id)
+
+def update_project(db: Session, project_id: int, **kwargs) -> Optional[models.OpenProject]:
+    project = db.get(models.OpenProject, project_id)
+    if not project:
+        return None
+    for k, v in kwargs.items():
+        if hasattr(project, k) and v is not None:
+            setattr(project, k, v)
+    project.updated_at = datetime.utcnow()
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+    return project
+
+def delete_project(db: Session, project_id: int) -> bool:
+    project = db.get(models.OpenProject, project_id)
+    if not project:
+        return False
+    db.delete(project)
+    db.commit()
+    return True
+
+def list_projects(db: Session, user: Optional[models.User] = None) -> List[models.OpenProject]:
+    # 返回所有public项目+用户是成员的private项目
+    statement = select(models.OpenProject)
+    if user is None:
+        statement = statement.where(models.OpenProject.is_public == True)
+    else:
+        # public or user is member
+        subq = select(models.ProjectMember.project_id).where(models.ProjectMember.user_id == user.id)
+        statement = statement.where((models.OpenProject.is_public == True) | (models.OpenProject.id.in_(subq)))
+    return db.exec(statement).all()
+
+# ProjectMember CRUD
+
+def add_member(db: Session, project_id: int, user_id: int, role: str = "MEMBER", status: str = "APPROVED") -> models.ProjectMember:
+    member = models.ProjectMember(
+        project_id=project_id,
+        user_id=user_id,
+        role=role,
+        status=status
+    )
+    db.add(member)
+    db.commit()
+    db.refresh(member)
+    return member
+
+def get_member(db: Session, project_id: int, user_id: int) -> Optional[models.ProjectMember]:
+    statement = select(models.ProjectMember).where(models.ProjectMember.project_id == project_id, models.ProjectMember.user_id == user_id)
+    return db.exec(statement).first()
+
+def update_member(db: Session, member_id: int, **kwargs) -> Optional[models.ProjectMember]:
+    member = db.get(models.ProjectMember, member_id)
+    if not member:
+        return None
+    for k, v in kwargs.items():
+        if hasattr(member, k) and v is not None:
+            setattr(member, k, v)
+    db.add(member)
+    db.commit()
+    db.refresh(member)
+    return member
+
+def remove_member(db: Session, member_id: int) -> bool:
+    member = db.get(models.ProjectMember, member_id)
+    if not member:
+        return False
+    db.delete(member)
+    db.commit()
+    return True
+
+def list_members(db: Session, project_id: int) -> List[models.ProjectMember]:
+    statement = select(models.ProjectMember).where(models.ProjectMember.project_id == project_id, models.ProjectMember.status == "APPROVED")
+    return db.exec(statement).all()
+
+# ProjectInvite CRUD
+
+def create_invite(db: Session, project_id: int, inviter_id: int, invitee_id: int) -> models.ProjectInvite:
+    invite = models.ProjectInvite(
+        project_id=project_id,
+        inviter_id=inviter_id,
+        invitee_id=invitee_id,
+        status="PENDING"
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+    return invite
+
+def get_invite(db: Session, invite_id: int) -> Optional[models.ProjectInvite]:
+    return db.get(models.ProjectInvite, invite_id)
+
+def update_invite(db: Session, invite_id: int, status: str) -> Optional[models.ProjectInvite]:
+    invite = db.get(models.ProjectInvite, invite_id)
+    if not invite:
+        return None
+    invite.status = status
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+    return invite
+
+def list_invites(db: Session, project_id: int, status: Optional[str] = None) -> List[models.ProjectInvite]:
+    statement = select(models.ProjectInvite).where(models.ProjectInvite.project_id == project_id)
+    if status:
+        statement = statement.where(models.ProjectInvite.status == status)
+    return db.exec(statement).all()
+
+# ProjectTag CRUD
+
+def create_tag(db: Session, name: str) -> models.ProjectTag:
+    tag = models.ProjectTag(name=name)
+    db.add(tag)
+    db.commit()
+    db.refresh(tag)
+    return tag
+
+def get_tag(db: Session, name: str) -> Optional[models.ProjectTag]:
+    statement = select(models.ProjectTag).where(models.ProjectTag.name == name)
+    return db.exec(statement).first()
+
+def list_tags(db: Session) -> List[models.ProjectTag]:
+    statement = select(models.ProjectTag)
+    return db.exec(statement).all()
+
+def add_tag_to_project(db: Session, project_id: int, tag_id: int) -> None:
+    link = models.ProjectTagLink(project_id=project_id, tag_id=tag_id)
+    db.add(link)
+    db.commit()
+
+def remove_tag_from_project(db: Session, project_id: int, tag_id: int) -> None:
+    statement = select(models.ProjectTagLink).where(models.ProjectTagLink.project_id == project_id, models.ProjectTagLink.tag_id == tag_id)
+    link = db.exec(statement).first()
+    if link:
+        db.delete(link)
+        db.commit()
