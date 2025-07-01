@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlmodel import Session
+from sqlmodel import Session, select
 from typing import List, Optional
 import os
 import json
@@ -1320,3 +1320,31 @@ contribution_type_labels = {
     "testing": "测试相关",
     "other": "其他"
 }
+
+@app.on_event("startup")
+def ensure_official_project():
+    with next(get_db()) as db:
+        project = db.exec(select(models.OpenProject).where(models.OpenProject.name == "RWA星球共创项目")).first()
+        if not project:
+            official_project = models.OpenProject(
+                name="RWA星球共创项目",
+                description="基于GitHub开源协作的RWA平台功能完善项目。通过提交Issue、改进建议获得链上积分奖励，成为平台核心贡献者。",
+                type="other",
+                stage="development",
+                progress=10,
+                totalValue=1000000,
+                raised=0,
+                investors=0,
+                teamSize=5,
+                daysLeft=100,
+                leaderId=0,
+                leader={"name": "RWA官方", "avatar": "", "title": "平台官方"},
+                tags=["官方", "共创", "RWA"],
+                location="上海",
+                foundedDate="2024-01-01",
+                lastUpdate="2024-01-01",
+                isRecruiting=True,
+                openPositions=[{"role": "开发者", "count": 2}, {"role": "产品经理", "count": 1}]
+            )
+            db.add(official_project)
+            db.commit()
