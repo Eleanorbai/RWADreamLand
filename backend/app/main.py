@@ -13,7 +13,7 @@ from .config import settings
 from . import crud, models
 from .utils import verify_password, get_password_hash
 from pydantic import BaseModel
-from .notification import create_site_notification
+from .notification import create_site_notification, notify_project_invite, notify_project_invite_approved, notify_project_invite_rejected
 
 logger = logging.getLogger(__name__)
 
@@ -1191,7 +1191,7 @@ def create_project_invite(
     invite = crud.create_invite(db, project_id, current_user.id, invitee_id)
     # 通知被邀请人
     project = crud.get_project(db, project_id)
-    create_site_notification(db, invitee_id, f"你被邀请加入项目{project.name}", f"请前往项目邀请页面处理。", type="project_invite")
+    notify_project_invite(db, invitee_id, project.name)
     return invite
 
 @app.get("/open-projects/{project_id}/invites", tags=["项目邀请"])
@@ -1228,7 +1228,7 @@ def approve_project_invite(
     crud.add_member(db, project_id, current_user.id, role="MEMBER")
     # 通知邀请人
     project = crud.get_project(db, project_id)
-    create_site_notification(db, invite.inviter_id, f"{current_user.username}已接受加入项目{project.name}", f"邀请已通过。", type="project_invite_result")
+    notify_project_invite_approved(db, invite.inviter_id, current_user.username, project.name)
     return {"success": True}
 
 @app.post("/open-projects/{project_id}/invites/{invite_id}/reject", tags=["项目邀请"])
@@ -1250,7 +1250,7 @@ def reject_project_invite(
     crud.update_invite(db, invite_id, "REJECTED")
     # 通知邀请人
     project = crud.get_project(db, project_id)
-    create_site_notification(db, invite.inviter_id, f"{current_user.username}拒绝加入项目{project.name}", f"邀请被拒绝。", type="project_invite_result")
+    notify_project_invite_rejected(db, invite.inviter_id, current_user.username, project.name)
     return {"success": True}
 
 # ========== 项目标签管理 ==========
