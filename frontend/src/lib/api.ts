@@ -85,13 +85,13 @@ api.interceptors.response.use(
 export const userApi = {
   // 获取当前用户信息
   getCurrentUser: async (): Promise<User> => {
-    const response = await api.get('/api/users/me');
+    const response = await api.get('/api/me');
     return response.data;
   },
 
   // 更新用户信息
   updateProfile: async (data: UserUpdate): Promise<User> => {
-    const response = await api.put('/api/users/me', data);
+    const response = await api.put('/api/me', data);
     return response.data;
   },
 
@@ -100,7 +100,7 @@ export const userApi = {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await api.post('/api/users/upload-avatar', formData, {
+    const response = await api.post('/api/upload-avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -119,7 +119,7 @@ export const userApi = {
   },
 
   changePassword: async (data: { old_password: string; new_password: string }): Promise<any> => {
-    const response = await api.put('/api/users/me/password', data);
+    const response = await api.put('/api/me/password', data);
     return response.data;
   },
 };

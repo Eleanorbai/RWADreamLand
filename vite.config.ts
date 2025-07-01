@@ -1,26 +1,93 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import path from "path"
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     proxy: {
-      '/open-projects': 'http://localhost:8000',
-      '/admin': 'http://localhost:8000',
-      '/users': 'http://localhost:8000',
-      '/me': 'http://localhost:8000',
-      '/notes': 'http://localhost:8000',
-      '/groups': 'http://localhost:8000',
-      '/github': 'http://localhost:8000',
-      '/contributors': 'http://localhost:8000',
-      '/tags': 'http://localhost:8000',
-      '/contents': 'http://localhost:8000',
-      '/messages': 'http://localhost:8000',
-      '/blockchain-records': 'http://localhost:8000',
-      '/stats': 'http://localhost:8000',
-      '/reviews': 'http://localhost:8000',
-      '/review-requests': 'http://localhost:8000',
-      // 可根据实际后端API补充其它前缀
+      // 认证相关路由 (使用/api前缀)
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      // 业务路由 (无前缀)
+      '/open-projects': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/admin': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/users': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/notes': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/groups': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/github': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/contributors': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/tags': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/contents': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/messages': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/blockchain-records': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/stats': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/reviews': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/review-requests': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      }
     }
-  }
-}); 
+  },
+})

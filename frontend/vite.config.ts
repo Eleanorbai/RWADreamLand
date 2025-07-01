@@ -12,9 +12,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // 你的 FastAPI 后端地址
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, '')
+        // 移除rewrite规则，保持/api前缀 ✅
       }
     }
   },
