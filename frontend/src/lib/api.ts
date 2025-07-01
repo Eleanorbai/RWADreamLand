@@ -166,19 +166,19 @@ export const noteApi = {
 export const reviewApi = {
   // 获取我的审核请求列表
   getMyReviewRequests: async (skip = 0, limit = 20): Promise<ReviewRequestWithDetails[]> => {
-    const response = await api.get(`/review-requests/my?skip=${skip}&limit=${limit}`);
+    const response = await api.get(`/api/review-requests/my?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
   // 获取待审核列表（审核员）
   getReviewRequests: async (skip = 0, limit = 20): Promise<ReviewRequestWithDetails[]> => {
-    const response = await api.get(`/review-requests?skip=${skip}&limit=${limit}`);
+    const response = await api.get(`/api/review-requests?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
   // 创建审核记录
   createReview: async (data: ReviewCreate): Promise<Review> => {
-    const response = await api.post('/reviews', data);
+    const response = await api.post('/api/reviews', data);
     return response.data;
   },
 };
@@ -187,13 +187,13 @@ export const reviewApi = {
 export const tagApi = {
   // 获取标签列表
   getTags: async (skip = 0, limit = 100): Promise<Tag[]> => {
-    const response = await api.get(`/tags?skip=${skip}&limit=${limit}`);
+    const response = await api.get(`/api/tags?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
   // 创建标签
   createTag: async (data: { name: string; description?: string; color?: string }): Promise<Tag> => {
-    const response = await api.post('/tags', data);
+    const response = await api.post('/api/tags', data);
     return response.data;
   },
 };
@@ -446,7 +446,7 @@ export const statsApi = {
 export const openSourceApi = {
   // 开源项目管理
   createProject: async (project: OpenProjectCreate): Promise<OpenProject> => {
-    const response = await api.post('/open-projects', project);
+    const response = await api.post('/api/open-projects', project);
     return response.data;
   },
 
@@ -458,22 +458,22 @@ export const openSourceApi = {
     if (isActive !== undefined) {
       params.append('is_active', isActive.toString());
     }
-    const response = await api.get(`/open-projects?${params}`);
+    const response = await api.get(`/api/open-projects?${params}`);
     return response.data;
   },
 
   getProject: async (projectId: number): Promise<OpenProject> => {
-    const response = await api.get(`/open-projects/${projectId}`);
+    const response = await api.get(`/api/open-projects/${projectId}`);
     return response.data;
   },
 
   updateProject: async (projectId: number, project: OpenProjectUpdate): Promise<OpenProject> => {
-    const response = await api.put(`/open-projects/${projectId}`, project);
+    const response = await api.put(`/api/open-projects/${projectId}`, project);
     return response.data;
   },
 
   deleteProject: async (projectId: number): Promise<MessageResponse> => {
-    const response = await api.delete(`/open-projects/${projectId}`);
+    const response = await api.delete(`/api/open-projects/${projectId}`);
     return response.data;
   },
 
@@ -493,84 +493,84 @@ export const openSourceApi = {
     if (userId) params.append('user_id', userId.toString());
     if (status) params.append('status', status);
     
-    const response = await api.get(`/admin/github-contributions?${params}`);
+    const response = await api.get(`/api/admin/github-contributions?${params}`);
     return response.data;
   },
 
   getContribution: async (contributionId: number): Promise<GitHubContribution> => {
-    const response = await api.get(`/github-contributions/${contributionId}`);
+    const response = await api.get(`/api/github-contributions/${contributionId}`);
     return response.data;
   },
 
   acceptContribution: async (contributionId: number, userId?: number): Promise<GitHubContribution> => {
     const data = userId ? { user_id: userId } : {};
-    const response = await api.put(`/github-contributions/${contributionId}/accept`, data);
+    const response = await api.put(`/api/github-contributions/${contributionId}/accept`, data);
     return response.data;
   },
 
   rejectContribution: async (contributionId: number, reason?: string): Promise<GitHubContribution> => {
     const data = reason ? { reason } : {};
-    const response = await api.put(`/github-contributions/${contributionId}/reject`, data);
+    const response = await api.put(`/api/github-contributions/${contributionId}/reject`, data);
     return response.data;
   },
 
   getContributionStats: async (): Promise<any> => {
-    const response = await api.get('/github-contributions/stats');
+    const response = await api.get('/api/github-contributions/stats');
     return response.data;
   },
 
   syncContributions: async (projectId: number): Promise<MessageResponse> => {
-    const response = await api.post(`/github/sync/${projectId}`);
+    const response = await api.post(`/api/github/sync/${projectId}`);
     return response.data;
   },
 
   // 贡献者管理
   createContributorProfile: async (profile: ContributorProfileCreate): Promise<ContributorProfile> => {
-    const response = await api.post('/contributor-profile', profile);
+    const response = await api.post('/api/contributor-profile', profile);
     return response.data;
   },
 
   getMyContributorProfile: async (): Promise<ContributorProfile> => {
-    const response = await api.get('/contributor-profile');
+    const response = await api.get('/api/contributor-profile');
     return response.data;
   },
 
   updateMyContributorProfile: async (profile: ContributorProfileUpdate): Promise<ContributorProfile> => {
-    const response = await api.put('/contributor-profile', profile);
+    const response = await api.put('/api/contributor-profile', profile);
     return response.data;
   },
 
   getContributorRankings: async (limit = 50): Promise<ContributorRanking[]> => {
-    const response = await api.get(`/contributors/rankings?limit=${limit}`);
+    const response = await api.get(`/api/contributors/rankings?limit=${limit}`);
     return response.data;
   },
 
   getUserContributions: async (userId: number, skip = 0, limit = 100): Promise<GitHubContribution[]> => {
-    const response = await api.get(`/contributors/${userId}/contributions?skip=${skip}&limit=${limit}`);
+    const response = await api.get(`/api/contributors/${userId}/contributions?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
   // 项目统计
   getProjectStats: async (projectId: number): Promise<ProjectStats> => {
-    const response = await api.get(`/open-projects/${projectId}/stats`);
+    const response = await api.get(`/api/open-projects/${projectId}/stats`);
     return response.data;
   },
 
   // 获取项目最近活动
   getRecentActivities: async (projectId: number, limit = 20): Promise<any> => {
-    const response = await api.get(`/open-projects/${projectId}/recent-activities?limit=${limit}`);
+    const response = await api.get(`/api/open-projects/${projectId}/recent-activities?limit=${limit}`);
     return response.data;
   },
 
   // 获取用户贡献统计
   getUserContributionStats: async (userId: number): Promise<any> => {
-    const response = await api.get(`/users/${userId}/contribution-stats`);
+    const response = await api.get(`/api/users/${userId}/contribution-stats`);
     return response.data;
   },
 
   // 获取区块链记录详情
   getBlockchainRecordDetail: async (recordId: number): Promise<any> => {
-    const response = await api.get(`/blockchain-records/${recordId}`);
+    const response = await api.get(`/api/blockchain-records/${recordId}`);
     return response.data;
   },
 };

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import { userApi } from "../lib/api";
 
 // 定义用户类型
 export interface User {
@@ -34,11 +34,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUser = async () => {
       try {
         setLoading(true);
-        // 假设有token，后端 /me 返回当前用户
-        const res = await axios.get("/api/me");
-        setUser(res.data);
-      } catch {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setUser(null);
+          return;
+        }
+        // 使用配置好的userApi实例，会自动添加认证token
+        const userData = await userApi.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error('获取用户信息失败:', error);
         setUser(null);
+        // 如果token无效，清除本地存储
+        localStorage.removeItem('token');
       } finally {
         setLoading(false);
       }
@@ -48,10 +56,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 退出登录
   const logout = () => {
+    localStorage.removeItem('token');
     setUser(null);
-    // 清除token等
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+    window.location.href = '/login';
   };
 
   return (

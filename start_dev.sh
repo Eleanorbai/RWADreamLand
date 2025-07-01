@@ -42,11 +42,15 @@ python init_db.py
 
 # 启动后端服务（后台运行）
 echo -e "${GREEN}启动 FastAPI 服务...${NC}"
-python start.py &
+python start.py --host :: &
 BACKEND_PID=$!
 
 # 等待后端启动
 sleep 5
+
+# 自动修正 Vite 代理 target 为 127.0.0.1:8000
+cd ../frontend
+sed -i '' "s|target: 'http://localhost:8000'|target: 'http://127.0.0.1:8000'|g" vite.config.ts
 
 # 启动前端
 echo -e "${BLUE}启动前端服务...${NC}"
@@ -68,9 +72,9 @@ echo -e "${GREEN}"
 echo "🎉 RWA Dream Land 开发环境启动完成!"
 echo ""
 echo "📍 服务地址:"
-echo "   前端: http://localhost:5173"
-echo "   后端: http://localhost:8000"
-echo "   API文档: http://localhost:8000/docs"
+echo "   前端: http://127.0.0.1:5173   (建议优先用此地址访问，避免本地IPv6代理问题)"
+echo "   后端: http://127.0.0.1:8000"
+echo "   API文档: http://127.0.0.1:8000/docs"
 echo ""
 echo "👤 默认账号:"
 echo "   管理员: admin / admin123"

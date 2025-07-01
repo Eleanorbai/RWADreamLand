@@ -235,6 +235,7 @@ export default function Origin() {
   useEffect(() => {
     // 加载所有项目
     openSourceApi.getProjects().then((projects) => {
+      console.log('open projects:', projects);
       let cards: OpenProjectCard[] = [];
       if (projects && projects.length > 0) {
         cards = projects.map(convertToCard);
@@ -243,10 +244,20 @@ export default function Origin() {
         setProjects(mockProjects); // 无数据时用 mock
       }
       const rwa = cards.find((p) => p.name === 'RWA星球共创项目');
-      if (rwa) setRwaProjectId(rwa.id);
+      console.log('rwa:', rwa);
+      if (rwa) {
+        console.log('setRwaProjectId:', rwa.id);
+        setRwaProjectId(rwa.id);
+      }
     });
     loadData();
+    // 持续追踪rwaProjectId变化
+    // eslint-disable-next-line
   }, []);
+
+  useEffect(() => {
+    console.log('rwaProjectId for button:', rwaProjectId);
+  }, [rwaProjectId]);
 
   const loadData = async () => {
     try {
@@ -600,7 +611,7 @@ export default function Origin() {
                     </svg>
                     GitHub
                   </Button>
-                  <Button 
+                  <Button
                     size="sm"
                     onClick={() => rwaProjectId && navigate(`/open-source/${rwaProjectId}`)}
                     className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
@@ -628,156 +639,161 @@ export default function Origin() {
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-              {filteredProjects.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Badge className={getStageColor(project.stage)}>
-                            {getStageLabel(project.stage)}
-                          </Badge>
-                          {project.isRecruiting && (
-                            <Badge variant="outline" className="text-green-600 border-green-600">
-                              招募中
+              {filteredProjects.map((project) => {
+                console.log('project:', project);
+                return (
+                  <Card key={project.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Badge className={getStageColor(project.stage)}>
+                              {getStageLabel(project.stage)}
                             </Badge>
-                          )}
+                            {project.isRecruiting && (
+                              <Badge variant="outline" className="text-green-600 border-green-600">
+                                招募中
+                              </Badge>
+                            )}
+                          </div>
+                          <CardTitle className="text-lg mb-2 hover:text-orange-600 transition-colors">
+                            {project.name}
+                          </CardTitle>
+                          <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                            {project.description}
+                          </p>
                         </div>
-                        <CardTitle className="text-lg mb-2 hover:text-orange-600 transition-colors">
-                          {project.name}
-                        </CardTitle>
-                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                          {project.description}
-                        </p>
+                        {/*
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>查看详情</DropdownMenuItem>
+                            <DropdownMenuItem>申请加入</DropdownMenuItem>
+                            <DropdownMenuItem>分享项目</DropdownMenuItem>
+                            <DropdownMenuItem>收藏</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        */}
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>查看详情</DropdownMenuItem>
-                          <DropdownMenuItem>申请加入</DropdownMenuItem>
-                          <DropdownMenuItem>分享项目</DropdownMenuItem>
-                          <DropdownMenuItem>收藏</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    {/* 项目负责人 */}
-                    <div className="flex items-center space-x-3 mb-4">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={project.leader.avatar} />
-                        <AvatarFallback>
-                          {project.leader.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium text-sm">{project.leader.name}</div>
-                        <div className="text-gray-500 text-xs">{project.leader.title}</div>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      {/* 项目负责人 */}
+                      <div className="flex items-center space-x-3 mb-4">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={project.leader.avatar} />
+                          <AvatarFallback>
+                            {project.leader.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium text-sm">{project.leader.name}</div>
+                          <div className="text-gray-500 text-xs">{project.leader.title}</div>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* 进度条 */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>项目进度</span>
-                        <span>{project.progress}%</span>
-                      </div>
-                      <Progress value={project.progress} className="h-2" />
-                    </div>
-
-                    {/* 融资信息 */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <div className="text-xs text-gray-500">已融资</div>
-                        <div className="text-sm font-semibold">{formatCurrency(project.raised)}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">目标金额</div>
-                        <div className="text-sm font-semibold">{formatCurrency(project.totalValue)}</div>
-                      </div>
-                    </div>
-
-                    {/* 项目信息 */}
-                    <div className="grid grid-cols-3 gap-4 mb-4 text-center">
-                      <div>
-                        <div className="text-xs text-gray-500">投资人</div>
-                        <div className="text-sm font-semibold">{project.investors}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">团队规模</div>
-                        <div className="text-sm font-semibold">{project.teamSize}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">剩余天数</div>
-                        <div className="text-sm font-semibold">{project.daysLeft}</div>
-                      </div>
-                    </div>
-
-                    {/* 标签 */}
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {project.tags.slice(0, 3).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {project.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{project.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-
-                    <Separator className="my-4" />
-
-                    {/* 招募信息 */}
-                    {project.isRecruiting && project.openPositions.length > 0 && (
+                      {/* 进度条 */}
                       <div className="mb-4">
-                        <div className="text-sm font-medium mb-2 flex items-center">
-                          <UserPlus className="w-4 h-4 mr-1" />
-                          正在招募
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>项目进度</span>
+                          <span>{project.progress}%</span>
                         </div>
-                        <div className="space-y-1">
-                          {project.openPositions.map((position, index) => (
-                            <div key={index} className="text-xs text-gray-600 bg-gray-50 rounded px-2 py-1">
-                              {position.role} × {position.count}
-                            </div>
-                          ))}
-                        </div>
+                        <Progress value={project.progress} className="h-2" />
                       </div>
-                    )}
 
-                    {/* 操作按钮 */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <Eye className="w-4 h-4 mr-1" />
-                          查看
+                      {/* 融资信息 */}
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <div className="text-xs text-gray-500">已融资</div>
+                          <div className="text-sm font-semibold">{formatCurrency(project.raised)}</div>
                         </div>
-                        <div className="flex items-center">
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          讨论
+                        <div>
+                          <div className="text-xs text-gray-500">目标金额</div>
+                          <div className="text-sm font-semibold">{formatCurrency(project.totalValue)}</div>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        {project.isRecruiting && (
-                          <Button size="sm" variant="outline">
-                            申请加入
-                          </Button>
+
+                      {/* 项目信息 */}
+                      <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+                        <div>
+                          <div className="text-xs text-gray-500">投资人</div>
+                          <div className="text-sm font-semibold">{project.investors}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">团队规模</div>
+                          <div className="text-sm font-semibold">{project.teamSize}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500">剩余天数</div>
+                          <div className="text-sm font-semibold">{project.daysLeft}</div>
+                        </div>
+                      </div>
+
+                      {/* 标签 */}
+                      <div className="flex flex-wrap gap-1 mb-4">
+                        {project.tags.slice(0, 3).map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {project.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{project.tags.length - 3}
+                          </Badge>
                         )}
-                        <Button size="sm">
-                          查看详情
-                        </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+                      <Separator className="my-4" />
+
+                      {/* 招募信息 */}
+                      {project.isRecruiting && project.openPositions.length > 0 && (
+                        <div className="mb-4">
+                          <div className="text-sm font-medium mb-2 flex items-center">
+                            <UserPlus className="w-4 h-4 mr-1" />
+                            正在招募
+                          </div>
+                          <div className="space-y-1">
+                            {project.openPositions.map((position, index) => (
+                              <div key={index} className="text-xs text-gray-600 bg-gray-50 rounded px-2 py-1">
+                                {position.role} × {position.count}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 操作按钮 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <div className="flex items-center">
+                            <Eye className="w-4 h-4 mr-1" />
+                            查看
+                          </div>
+                          <div className="flex items-center">
+                            <MessageCircle className="w-4 h-4 mr-1" />
+                            讨论
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          {project.isRecruiting && (
+                            <Button size="sm" variant="outline">
+                              申请加入
+                            </Button>
+                          )}
+                          <Button size="sm" onClick={() => { alert('clicked'); navigate(`/open-source/${project.id}`); }}>
+                            查看详情
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </TabsContent>

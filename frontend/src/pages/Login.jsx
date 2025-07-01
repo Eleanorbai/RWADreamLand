@@ -17,14 +17,16 @@ export default function Login() {
       const params = new URLSearchParams();
       params.append("username", form.username);
       params.append("password", form.password);
-      // FastAPI OAuth2PasswordRequestForm 需要 x-www-form-urlencoded
-      const res = await axios.post("http://localhost:8000/api/login", params, {
+      // 使用Vite代理，而不是硬编码URL
+      const res = await axios.post("/api/login", params, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
       });
       localStorage.setItem("token", res.data.access_token);
       setMsg("登录成功，正在跳转...");
       setTimeout(() => {
         navigate("/me");
+        // 强制刷新页面以触发UserContext重新获取用户信息
+        window.location.reload();
       }, 1000); // 1秒后跳转
     } catch (err) {
       setMsg(err.response?.data?.detail || "登录失败");

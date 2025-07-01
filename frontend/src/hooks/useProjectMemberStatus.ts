@@ -15,7 +15,7 @@ export function useProjectMemberStatus(projectId: number) {
     if (!user || !projectId) return;
     setLoading(true);
     axios
-      .get(`/open-projects/${projectId}/members`)
+      .get(`/api/open-projects/${projectId}/members`)
       .then((res) => {
         const members = res.data;
         const me = members.find((m: any) => m.user_id === userId);

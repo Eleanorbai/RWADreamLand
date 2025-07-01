@@ -103,7 +103,7 @@ const OpenSourceProject: React.FC = () => {
   const handleApply = async () => {
     setApplying(true);
     try {
-      await axios.post(`/open-projects/${projectId}/members`);
+      await axios.post(`/api/open-projects/${projectId}/members`);
       toast({
         title: "申请已提交",
         description: "请等待管理员审核",
