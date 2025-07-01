@@ -94,6 +94,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.get("/me", response_model=models.UserPublic)
 def read_users_me(current_user: models.User = Depends(get_current_active_user)):
+    print("访问了 /users/me")
     return current_user
 
 @router.put("/me", response_model=models.UserPublic)

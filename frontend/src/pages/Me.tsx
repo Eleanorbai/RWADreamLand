@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from "@/hooks/useUser";
 
 import { User, UserRole } from '../types/user';
 import { userApi, openSourceApi } from '../lib/api';
@@ -54,6 +55,8 @@ export default function Me({}: MePageProps) {
   // 新增状态：贡献统计
   const [contributionStats, setContributionStats] = useState<any>(null);
   const [contributionLoading, setContributionLoading] = useState(true);
+
+  const { user: userFromUserHook, loading: userLoading, logout } = useUser();
 
   useEffect(() => {
     loadUserData();
@@ -204,7 +207,7 @@ export default function Me({}: MePageProps) {
       setEditMode(false);
       setCurrentNote({ id: null, title: '', content: '' });
       setTimeout(() => setNoteMsg(''), 1500);
-      setNotes(notes.filter(note => note.id !== id));
+      setNotes((Array.isArray(notes) ? notes : []).filter(note => note.id !== id));
     } catch {
       setNoteMsg('删除失败');
     }
@@ -373,10 +376,7 @@ export default function Me({}: MePageProps) {
                 <Button 
                   variant="outline" 
                   className="w-full mt-2"
-                  onClick={() => {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
-                  }}
+                  onClick={logout}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   退出登录
@@ -435,11 +435,11 @@ export default function Me({}: MePageProps) {
                 {/* 笔记列表区块 */}
                 {notesLoading ? (
                   <div className="text-center text-gray-400 py-8">加载中...</div>
-                ) : notes.length === 0 ? (
+                ) : (Array.isArray(notes) ? notes : []).length === 0 ? (
                   <div className="text-gray-400 text-center py-8">暂无笔记，快去新建一条吧！</div>
                 ) : (
                   <ul className="space-y-4">
-                    {notes.map(note => (
+                    {(Array.isArray(notes) ? notes : []).map(note => (
                       <li key={note.id} className="p-4 bg-blue-50 rounded shadow flex flex-col md:flex-row md:items-center md:justify-between">
                         <div>
                           <div className="font-bold text-blue-700">{note.title}</div>
@@ -533,11 +533,11 @@ export default function Me({}: MePageProps) {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{notes.length}</div>
+                    <div className="text-2xl font-bold text-gray-900">{(Array.isArray(notes) ? notes : []).length}</div>
                     <div className="text-sm text-gray-600">笔记数量</div>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{notes.filter(n => n.is_submitted).length}</div>
+                    <div className="text-2xl font-bold text-gray-900">{(Array.isArray(notes) ? notes : []).filter(n => n.is_submitted).length}</div>
                     <div className="text-sm text-gray-600">提交审核</div>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-lg">

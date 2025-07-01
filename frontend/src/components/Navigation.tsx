@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Globe, MessageCircle, Users, MessageSquare, User, FileText, ChevronDown, LogIn, UserPlus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { useUser } from "@/hooks/useUser";
 
 const mainNavItems = [
   { path: '/square', icon: Globe, label: '灵感广场' },
@@ -21,7 +22,8 @@ const studyMenuItems = [
 
 const Navigation: React.FC<{ isMenuOpen: boolean; setIsMenuOpen: (isOpen: boolean) => void }> = ({ isMenuOpen, setIsMenuOpen }) => {
   const location = useLocation();
-  const isLoggedIn = Boolean(localStorage.getItem('token'));
+  const { user, logout } = useUser();
+  const isLoggedIn = !!user;
   return (
     <nav className="hidden md:flex items-center space-x-2 px-6 h-16 bg-white border-b border-gray-200 shadow-sm">
       {/* 学习社区下拉菜单 */}

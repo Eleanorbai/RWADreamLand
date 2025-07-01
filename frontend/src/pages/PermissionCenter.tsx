@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, GitBranch, Settings, BarChart3 } from 'lucide-react';
+import { useUser } from "@/hooks/useUser";
 
 const roleDisplay = {
   user: '普通用户',
@@ -27,6 +28,7 @@ export default function PermissionCenter() {
   const [selected, setSelected] = useState<number[]>([]);
   const [batchRole, setBatchRole] = useState<UserRole | ''>('');
   const navigate = useNavigate();
+  const { user } = useUser();
 
   useEffect(() => {
     loadUsers();

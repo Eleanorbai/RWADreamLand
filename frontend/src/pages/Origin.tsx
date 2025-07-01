@@ -60,7 +60,7 @@ import {
   Activity,
   BarChart3
 } from 'lucide-react';
-import { groupApi } from '@/lib/api';
+import { groupApi, openSourceApi } from '@/lib/api';
 import { Group, GroupMember } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -85,6 +85,32 @@ const ProjectType = {
   CARBON_CREDITS: 'carbon_credits',
   OTHER: 'other'
 } as const;
+
+// 定义卡片展示用类型
+interface OpenProjectCard {
+  id: number;
+  name: string;
+  description: string;
+  type: string;
+  stage: string;
+  progress: number;
+  totalValue: number;
+  raised: number;
+  investors: number;
+  teamSize: number;
+  daysLeft: number;
+  leader: {
+    name: string;
+    avatar: string;
+    title: string;
+  };
+  tags: string[];
+  location: string;
+  foundedDate: string;
+  lastUpdate: string;
+  isRecruiting: boolean;
+  openPositions: { role: string; count: number }[];
+}
 
 // 模拟项目数据
 const mockProjects = [
@@ -173,15 +199,52 @@ const mockProjects = [
 
 export default function Origin() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [projects, setProjects] = useState(mockProjects);
+  const [projects, setProjects] = useState<OpenProjectCard[]>(mockProjects);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStage, setSelectedStage] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [rwaProjectId, setRwaProjectId] = useState<number | null>(null);
   const navigate = useNavigate();
 
+  // 转换后端 OpenProject 为卡片类型
+  function convertToCard(project: any): OpenProjectCard {
+    return {
+      id: project.id,
+      name: project.name,
+      description: project.description || '',
+      type: project.type || 'other',
+      stage: project.stage || 'idea',
+      progress: project.progress || 0,
+      totalValue: project.totalValue || 0,
+      raised: project.raised || 0,
+      investors: project.investors || 0,
+      teamSize: project.teamSize || 0,
+      daysLeft: project.daysLeft || 0,
+      leader: project.leader || { name: '官方', avatar: '', title: '' },
+      tags: project.tags || [],
+      location: project.location || '',
+      foundedDate: project.foundedDate || '',
+      lastUpdate: project.lastUpdate || '',
+      isRecruiting: project.isRecruiting || false,
+      openPositions: project.openPositions || [],
+    };
+  }
+
   useEffect(() => {
+    // 加载所有项目
+    openSourceApi.getProjects().then((projects) => {
+      let cards: OpenProjectCard[] = [];
+      if (projects && projects.length > 0) {
+        cards = projects.map(convertToCard);
+        setProjects(cards);
+      } else {
+        setProjects(mockProjects); // 无数据时用 mock
+      }
+      const rwa = cards.find((p) => p.name === 'RWA星球共创项目');
+      if (rwa) setRwaProjectId(rwa.id);
+    });
     loadData();
   }, []);
 
@@ -189,7 +252,7 @@ export default function Origin() {
     try {
       setLoading(true);
       const groupData = await groupApi.getGroups(0, 50);
-      setGroups(groupData);
+      setGroups(Array.isArray(groupData) ? groupData : []);
     } catch (error) {
       console.error('加载数据失败:', error);
       toast.error('加载数据失败');
@@ -539,8 +602,9 @@ export default function Origin() {
                   </Button>
                   <Button 
                     size="sm"
-                    onClick={() => navigate('/open-source/1')}
+                    onClick={() => rwaProjectId && navigate(`/open-source/${rwaProjectId}`)}
                     className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                    disabled={!rwaProjectId}
                   >
                     查看详情
                   </Button>
@@ -721,7 +785,7 @@ export default function Origin() {
         {/* 团队协作 */}
         <TabsContent value="teams" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groups.map((group) => (
+            {(groups ?? []).map((group) => (
               <Card key={group.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">

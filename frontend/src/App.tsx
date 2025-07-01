@@ -27,6 +27,7 @@ import PermissionCenter from './pages/PermissionCenter';
 import { Toaster } from './components/ui/toaster';
 import './App.css';
 import { UserPlus, LogIn, User } from 'lucide-react';
+import { UserProvider } from "@/context/UserContext";
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,51 +39,54 @@ function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      
-      <main className="transition-all duration-300 ease-in-out">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/concepts" element={<ConceptsPage />} />
-          <Route path="/cases" element={<CaseStudiesPage />} />
-          <Route path="/implementation" element={<ImplementationPage />} />
-          <Route path="/learning" element={<LearningPathPage />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/me" element={<Me />} />
-          
-          {/* 笔记相关路由 */}
-          <Route path="/notes" element={<Notes />} />
-          <Route path="/notes/new" element={<NoteEditor />} />
-          <Route path="/notes/:id" element={<NoteView />} />
-          <Route path="/notes/:id/edit" element={<NoteEditor />} />
-          
-          {/* 审核相关路由 */}
-          <Route path="/review" element={<ReviewDashboard />} />
-          
-          {/* 新功能路由 */}
-          <Route path="/square" element={<Square />} />
-          <Route path="/groups" element={<Groups />} />
-          <Route path="/intelligence" element={<Intelligence />} />
-          <Route path="/origin" element={<Origin />} />
-          <Route path="/dock" element={<Dock />} />
-          
-          {/* 个人设置路由 */}
-          <Route path="/settings" element={<Settings />} />
-          
-          {/* 管理员路由 */}
-          <Route path="/admin" element={<PermissionCenter />} />
-          <Route path="/admin/contributions" element={<ContributionReview />} />
-          
-          {/* 开源项目路由 */}
-          <Route path="/projects/:id" element={<OpenSourceProject />} />
-        </Routes>
-      </main>
-      
-      <Toaster />
-    </div>
+    <UserProvider>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+        
+        <main className="transition-all duration-300 ease-in-out">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/concepts" element={<ConceptsPage />} />
+            <Route path="/cases" element={<CaseStudiesPage />} />
+            <Route path="/implementation" element={<ImplementationPage />} />
+            <Route path="/learning" element={<LearningPathPage />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/me" element={<Me />} />
+            
+            {/* 笔记相关路由 */}
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/notes/new" element={<NoteEditor />} />
+            <Route path="/notes/:id" element={<NoteView />} />
+            <Route path="/notes/:id/edit" element={<NoteEditor />} />
+            
+            {/* 审核相关路由 */}
+            <Route path="/review" element={<ReviewDashboard />} />
+            
+            {/* 新功能路由 */}
+            <Route path="/square" element={<Square />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/intelligence" element={<Intelligence />} />
+            <Route path="/origin" element={<Origin />} />
+            <Route path="/dock" element={<Dock />} />
+            
+            {/* 个人设置路由 */}
+            <Route path="/settings" element={<Settings />} />
+            
+            {/* 管理员路由 */}
+            <Route path="/admin" element={<PermissionCenter />} />
+            <Route path="/admin/contributions" element={<ContributionReview />} />
+            
+            {/* 开源项目路由 */}
+            <Route path="/projects/:id" element={<OpenSourceProject />} />
+            <Route path="/open-source/:projectId" element={<OpenSourceProject />} />
+          </Routes>
+        </main>
+        
+        <Toaster />
+      </div>
+    </UserProvider>
   );
 }
 

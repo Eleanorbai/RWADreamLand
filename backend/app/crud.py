@@ -687,11 +687,31 @@ def update_blockchain_record_confirmation(db: Session, record_id: int, transacti
 # RWA星球共创项目 CRUD 操作
 
 # 开源项目相关操作
-def create_open_project(db: Session, project: models.OpenProjectCreate) -> models.OpenProject:
-    db_project = models.OpenProject(**project.model_dump())
+def create_open_project(db: Session, project: "OpenProjectCreate") -> "OpenProject":
+    # 先校验 creator_id
+    if not project.creator_id:
+        raise ValueError("creator_id 不能为空")
+    db_project = models.OpenProject(
+        name=project.name,
+        description=project.description,
+        is_public=project.is_public,
+        creator_id=project.creator_id,
+        github_repo=project.github_repo,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
+    # 创建者自动成为项目管理员
+    member = models.ProjectMember(
+        project_id=db_project.id,
+        user_id=project.creator_id,
+        role="ADMIN",
+        status="APPROVED"
+    )
+    db.add(member)
+    db.commit()
     return db_project
 
 def get_open_project(db: Session, project_id: int) -> Optional[models.OpenProject]:
@@ -1037,17 +1057,22 @@ def list_projects(db: Session, user: Optional[models.User] = None) -> List[model
 
 # ProjectMember CRUD
 
-def add_member(db: Session, project_id: int, user_id: int, role: str = "MEMBER", status: str = "APPROVED") -> models.ProjectMember:
-    member = models.ProjectMember(
+def add_member(db: Session, project_id: int, user_id: int, role: str = "MEMBER", status: str = "PENDING"):
+    from .models import ProjectMember
+    # 检查是否已是成员
+    member = db.exec(select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == user_id)).first()
+    if member:
+        return member
+    new_member = ProjectMember(
         project_id=project_id,
         user_id=user_id,
         role=role,
         status=status
     )
-    db.add(member)
+    db.add(new_member)
     db.commit()
-    db.refresh(member)
-    return member
+    db.refresh(new_member)
+    return new_member
 
 def get_member(db: Session, project_id: int, user_id: int) -> Optional[models.ProjectMember]:
     statement = select(models.ProjectMember).where(models.ProjectMember.project_id == project_id, models.ProjectMember.user_id == user_id)

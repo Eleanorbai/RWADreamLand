@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from "@/hooks/useUser";
 
 export default function Settings() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -21,14 +21,13 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwdLoading, setPwdLoading] = useState(false);
 
+  const { user, loading } = useUser();
+
   useEffect(() => {
-    userApi.getCurrentUser().then(user => {
-      setFullName(user.full_name || '');
-      setEmail(user.email || '');
-      setAvatarUrl(user.avatar_url ? 'http://localhost:8000' + user.avatar_url : '');
-      setLoading(false);
-    });
-  }, []);
+    setFullName(user.full_name || '');
+    setEmail(user.email || '');
+    setAvatarUrl(user.avatar_url ? 'http://localhost:8000' + user.avatar_url : '');
+  }, [user]);
 
   // 头像上传
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

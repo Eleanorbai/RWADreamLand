@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from "@/hooks/useUser";
 
 import { ReviewRequestWithDetails, ReviewStatus, reviewStatusNames, reviewStatusColors } from '../types/note';
 import { UserRole } from '../types/user';
@@ -32,10 +33,10 @@ export default function ReviewDashboard({}: ReviewDashboardProps) {
   const [reviewComment, setReviewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: userLoading } = useUser();
 
   useEffect(() => {
     checkPermissions();
@@ -44,11 +45,8 @@ export default function ReviewDashboard({}: ReviewDashboardProps) {
 
   const checkPermissions = async () => {
     try {
-      const userData = await userApi.getCurrentUser();
-      setCurrentUser(userData);
-      
       // 检查权限
-      if (userData.role !== UserRole.REVIEWER && userData.role !== UserRole.ADMIN) {
+      if (user.role !== UserRole.REVIEWER && user.role !== UserRole.ADMIN) {
         toast({
           title: '权限不足',
           description: '您没有访问审核页面的权限',

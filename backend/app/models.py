@@ -683,7 +683,7 @@ class GitHubContributionBase(SQLModel):
 class GitHubContribution(GitHubContributionBase, table=True):
     __tablename__ = "github_contributions"
     id: Optional[int] = Field(default=None, primary_key=True)
-    project_id: int = Field(foreign_key="open_projects.id")
+    project_id: int = Field(foreign_key="openproject.id")
     user_id: Optional[int] = Field(default=None, foreign_key="users.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
@@ -825,3 +825,29 @@ class ProjectInvite(SQLModel, table=True):
     invitee_id: int = Field(foreign_key="users.id")
     status: str = Field(default="PENDING", max_length=20)  # PENDING/APPROVED/REJECTED
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# OpenProject 基础模型
+class OpenProjectBase(SQLModel):
+    name: Optional[str] = Field(default=None, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=500)
+    is_public: Optional[bool] = Field(default=True)
+    github_repo: Optional[str] = Field(default=None, max_length=300)
+
+class OpenProjectCreate(OpenProjectBase):
+    name: str
+    is_public: bool = True
+    description: Optional[str] = None
+    github_repo: Optional[str] = None
+    creator_id: int
+
+class OpenProjectUpdate(SQLModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_public: Optional[bool] = None
+    github_repo: Optional[str] = None
+
+class OpenProjectPublic(OpenProjectBase):
+    id: int
+    creator_id: int
+    created_at: datetime
+    updated_at: datetime

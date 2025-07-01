@@ -37,7 +37,7 @@ export interface OpenProject {
   github_repo: string;
   description?: string;
   contract_address?: string;
-  is_active: boolean;
+  is_public: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -53,7 +53,7 @@ export interface OpenProjectUpdate {
   name?: string;
   description?: string;
   contract_address?: string;
-  is_active?: boolean;
+  is_public?: boolean;
 }
 
 // GitHub贡献记录类型

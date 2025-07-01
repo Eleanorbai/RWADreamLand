@@ -36,7 +36,7 @@ app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads"
 # 允许跨域
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins if not settings.debug else ["*"],
+    allow_origins=["http://localhost:5173"],  # 或指定你的前端地址如 ["http://localhost:5173"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -777,10 +777,9 @@ def change_password(
 # RWA星球共创项目相关路由
 
 # 开源项目管理路由
-@app.post("/open-projects", response_model=models.OpenProjectPublic, tags=["开源项目"])
+@app.post("/open-projects", response_model=models.OpenProject, tags=["开源项目"])
 def create_open_project(
     project: models.OpenProjectCreate,
-    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
     db: Session = Depends(get_db)
 ):
     return crud.create_open_project(db=db, project=project)
@@ -1048,7 +1047,7 @@ def read_recent_activities(
                 "github_username": contrib.github_username,
                 "avatar": f"https://github.com/{contrib.github_username}.png"
             },
-            "action": f"提交了{models.contributionTypeLabels.get(contrib.contribution_type, '贡献')}",
+            "action": f"提交了{contribution_type_labels.get(str(contrib.contribution_type), '贡献')}",
             "title": contrib.issue_title,
             "points": contrib.contribution_points,
             "status": contrib.status,
@@ -1149,18 +1148,18 @@ def list_project_members(
     return crud.list_members(db, project_id)
 
 @app.post("/open-projects/{project_id}/members", tags=["项目成员"])
-def add_project_member(
+def apply_project_member(
     project_id: int,
-    user_id: int = Body(...),
-    role: str = Body("MEMBER"),
     current_user: models.User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    # 仅管理员可添加
+    # 检查是否已是成员
     member = crud.get_member(db, project_id, current_user.id)
-    if not member or member.role != "ADMIN":
-        raise HTTPException(403, "仅项目管理员可添加成员")
-    return crud.add_member(db, project_id, user_id, role)
+    if member:
+        raise HTTPException(400, "你已是该项目成员")
+    # 创建申请，状态为PENDING，管理员审核
+    new_member = crud.add_member(db, project_id, current_user.id, role="MEMBER", status="PENDING")
+    return new_member
 
 @app.delete("/open-projects/{project_id}/members/{member_id}", tags=["项目成员"])
 def remove_project_member(
@@ -1310,3 +1309,14 @@ def remove_tag_from_project(
         raise HTTPException(403, "仅项目管理员可移除标签")
     crud.remove_tag_from_project(db, project_id, tag_id)
     return {"success": True}
+
+contribution_type_labels = {
+    "bug_report": "Bug报告",
+    "feature_request": "功能建议",
+    "documentation": "文档完善",
+    "code_contribution": "代码贡献",
+    "critical_fix": "关键修复",
+    "ui_ux_improvement": "UI/UX改进",
+    "testing": "测试相关",
+    "other": "其他"
+}

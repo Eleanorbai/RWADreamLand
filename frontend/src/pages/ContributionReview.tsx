@@ -25,6 +25,7 @@ import { openSourceApi, userApi } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUser } from "@/hooks/useUser";
 
 interface GitHubContribution {
   id: number;
@@ -78,6 +79,7 @@ export default function ContributionReview() {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useUser();
 
   useEffect(() => {
     loadContributions();
@@ -174,10 +176,6 @@ export default function ContributionReview() {
         return newSet;
       });
     }
-  };
-
-  const findUserByGithubUsername = (githubUsername: string) => {
-    return users.find(u => u.github_username === githubUsername);
   };
 
   const filteredContributions = contributions
@@ -291,7 +289,6 @@ export default function ContributionReview() {
         {/* 贡献列表 */}
         <div className="space-y-4">
           {filteredContributions.map((contribution) => {
-            const user = findUserByGithubUsername(contribution.github_username);
             const isProcessing = processing.has(contribution.id);
             
             return (

@@ -55,8 +55,9 @@ import { MessageResponse } from '../types';
 
 // 配置axios实例
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  // baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   timeout: 10000,
+  withCredentials: true,
 });
 
 // 请求拦截器：自动添加认证头
@@ -84,13 +85,13 @@ api.interceptors.response.use(
 export const userApi = {
   // 获取当前用户信息
   getCurrentUser: async (): Promise<User> => {
-    const response = await api.get('/me');
+    const response = await api.get('/api/users/me');
     return response.data;
   },
 
   // 更新用户信息
   updateProfile: async (data: UserUpdate): Promise<User> => {
-    const response = await api.put('/me', data);
+    const response = await api.put('/api/users/me', data);
     return response.data;
   },
 
@@ -99,7 +100,7 @@ export const userApi = {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await api.post('/upload-avatar', formData, {
+    const response = await api.post('/api/users/upload-avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -108,17 +109,17 @@ export const userApi = {
   },
 
   getAllUsers: async (): Promise<User[]> => {
-    const response = await api.get('/users');
+    const response = await api.get('/api/users');
     return response.data;
   },
 
   updateUserRole: async (userId: number, newRole: UserRole): Promise<any> => {
-    const response = await api.patch(`/users/${userId}/role`, { new_role: newRole });
+    const response = await api.patch(`/api/users/${userId}/role`, { new_role: newRole });
     return response.data;
   },
 
   changePassword: async (data: { old_password: string; new_password: string }): Promise<any> => {
-    const response = await api.put('/me/password', data);
+    const response = await api.put('/api/users/me/password', data);
     return response.data;
   },
 };
@@ -127,36 +128,36 @@ export const userApi = {
 export const noteApi = {
   // 获取我的笔记列表
   getMyNotes: async (skip = 0, limit = 20): Promise<Note[]> => {
-    const response = await api.get(`/notes/my?skip=${skip}&limit=${limit}`);
+    const response = await api.get(`/api/notes/my?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
   // 获取笔记详情
   getNote: async (noteId: number): Promise<Note> => {
-    const response = await api.get(`/notes/${noteId}`);
+    const response = await api.get(`/api/notes/${noteId}`);
     return response.data;
   },
 
   // 创建笔记
   createNote: async (data: NoteCreate): Promise<Note> => {
-    const response = await api.post('/notes', data);
+    const response = await api.post('/api/notes', data);
     return response.data;
   },
 
   // 更新笔记
   updateNote: async (noteId: number, data: NoteUpdate): Promise<Note> => {
-    const response = await api.put(`/notes/${noteId}`, data);
+    const response = await api.put(`/api/notes/${noteId}`, data);
     return response.data;
   },
 
   // 删除笔记
   deleteNote: async (noteId: number): Promise<void> => {
-    await api.delete(`/notes/${noteId}`);
+    await api.delete(`/api/notes/${noteId}`);
   },
 
   // 提交笔记审核
   submitForReview: async (noteId: number): Promise<ReviewRequest> => {
-    const response = await api.post(`/notes/${noteId}/submit`);
+    const response = await api.post(`/api/notes/${noteId}/submit`);
     return response.data;
   },
 };

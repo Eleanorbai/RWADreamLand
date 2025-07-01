@@ -17,6 +17,8 @@ import {
   contributionStatusLabels
 } from '@/types/opensource';
 import { useToast } from '@/hooks/use-toast';
+import { useProjectMemberStatus } from "@/hooks/useProjectMemberStatus";
+import axios from "axios";
 
 const OpenSourceProject: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -30,6 +32,10 @@ const OpenSourceProject: React.FC = () => {
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [errorType, setErrorType] = useState<null | "notfound" | "forbidden">(null);
+
+  const { status, loading: memberLoading } = useProjectMemberStatus(project?.id || 0);
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -40,6 +46,7 @@ const OpenSourceProject: React.FC = () => {
   const loadProjectData = async (id: number) => {
     try {
       setLoading(true);
+      setErrorType(null);
       const [projectData, contributionsData, rankingsData, statsData, activitiesData] = await Promise.all([
         openSourceApi.getProject(id),
         openSourceApi.getContributions(id, undefined, undefined, 0, 50),
@@ -49,17 +56,24 @@ const OpenSourceProject: React.FC = () => {
       ]);
       
       setProject(projectData);
-      setContributions(contributionsData);
-      setRankings(rankingsData);
+      setContributions(Array.isArray(contributionsData) ? contributionsData : []);
+      setRankings(Array.isArray(rankingsData) ? rankingsData : []);
       setStats(statsData);
       setActivities(activitiesData.activities || []);
-    } catch (error) {
-      console.error('Failed to load project data:', error);
-      toast({
-        title: "加载失败",
-        description: "无法加载项目数据，请稍后重试",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        setErrorType("notfound");
+      } else if (error?.response?.status === 403) {
+        setErrorType("forbidden");
+      } else {
+        console.error('Failed to load project data:', error);
+        toast({
+          title: "加载失败",
+          description: "无法加载项目数据，请稍后重试",
+          variant: "destructive",
+        });
+      }
+      setProject(null);
     } finally {
       setLoading(false);
     }
@@ -72,7 +86,7 @@ const OpenSourceProject: React.FC = () => {
       const result = await openSourceApi.syncContributions(parseInt(projectId));
       toast({
         title: "同步成功",
-        description: result.msg,
+        description: result.message || JSON.stringify(result),
       });
       // 重新加载数据
       loadProjectData(parseInt(projectId));
@@ -86,6 +100,29 @@ const OpenSourceProject: React.FC = () => {
     }
   };
 
+  const handleApply = async () => {
+    setApplying(true);
+    try {
+      await axios.post(`/open-projects/${projectId}/members`);
+      toast({
+        title: "申请已提交",
+        description: "请等待管理员审核",
+      });
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e: any) {
+      toast({
+        title: "申请失败",
+        description: e?.response?.data?.detail || "未知错误",
+        variant: "destructive",
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  // 渲染前容错
+  const safeContributions = Array.isArray(contributions) ? contributions : [];
+
   if (loading) {
     return (
       <div className="container mx-auto py-8">
@@ -97,13 +134,22 @@ const OpenSourceProject: React.FC = () => {
     );
   }
 
-  if (!project) {
+  if (errorType === "notfound") {
     return (
       <div className="container mx-auto py-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">项目不存在</h1>
-        <Button onClick={() => navigate('/origin')}>
-          返回原点馆
-        </Button>
+        <Button onClick={() => navigate('/origin')}>返回原点馆</Button>
+      </div>
+    );
+  }
+
+  if (errorType === "forbidden") {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">您不是项目成员</h1>
+        <p className="mb-4 text-gray-600">可以先看看其他项目，或申请加入该项目。</p>
+        <Button onClick={() => navigate('/origin')}>返回原点馆</Button>
+        <Button onClick={handleApply} className="ml-4">申请加入项目</Button>
       </div>
     );
   }
@@ -141,13 +187,28 @@ const OpenSourceProject: React.FC = () => {
               <Button variant="outline" onClick={handleSyncContributions}>
                 同步GitHub数据
               </Button>
-              <Badge variant={project.is_active ? "default" : "secondary"}>
-                {project.is_active ? "活跃" : "停用"}
+              <Badge variant={project.is_public ? "default" : "secondary"}>
+                {project.is_public ? "公开" : "私有"}
               </Badge>
             </div>
           </div>
         </CardHeader>
       </Card>
+
+      {!memberLoading && status === "NOT_MEMBER" && (
+        <Button onClick={handleApply} disabled={applying} className="mt-4">
+          {applying ? "申请中..." : "申请加入项目"}
+        </Button>
+      )}
+      {!memberLoading && status === "PENDING" && (
+        <Button disabled className="mt-4">已申请，等待审核</Button>
+      )}
+      {!memberLoading && status === "APPROVED" && (
+        <Button disabled className="mt-4">已是项目成员</Button>
+      )}
+      {!memberLoading && status === "ADMIN" && (
+        <Button disabled className="mt-4">你是项目管理员</Button>
+      )}
 
       {/* 项目统计 */}
       {stats && (
@@ -219,7 +280,7 @@ const OpenSourceProject: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {contributions.slice(0, 5).map((contribution) => (
+                  {(safeContributions ?? []).slice(0, 5).map((contribution) => (
                     <div key={contribution.id} className="flex items-start gap-3 p-3 border rounded-lg">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={`https://github.com/${contribution.github_username}.png`} />
@@ -258,7 +319,7 @@ const OpenSourceProject: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {stats?.top_contributors.slice(0, 5).map((contributor, index) => (
+                  {(stats?.top_contributors ?? []).slice(0, 5).map((contributor, index) => (
                     <div key={contributor.user_id} className="flex items-center gap-3">
                       <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold">
                         {index + 1}
@@ -289,7 +350,7 @@ const OpenSourceProject: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {contributions.map((contribution) => (
+                {safeContributions.map((contribution) => (
                   <div key={contribution.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
@@ -407,7 +468,7 @@ const OpenSourceProject: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {contributions.filter(c => c.blockchain_hash).slice(0, 8).map((contribution) => (
+                  {(safeContributions.filter(c => c.blockchain_hash) ?? []).slice(0, 8).map((contribution) => (
                     <div key={contribution.id} className="flex items-center gap-3 p-3 border rounded-lg bg-gradient-to-r from-green-50 to-blue-50">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={`https://github.com/${contribution.github_username}.png`} />
@@ -451,7 +512,7 @@ const OpenSourceProject: React.FC = () => {
                   <div className="text-sm text-gray-600">网络状态</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{contributions.filter(c => c.blockchain_hash).length}</div>
+                  <div className="text-2xl font-bold text-blue-600">{safeContributions.filter(c => c.blockchain_hash).length}</div>
                   <div className="text-sm text-gray-600">已上链记录</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
@@ -541,7 +602,7 @@ const OpenSourceProject: React.FC = () => {
                         <span className="font-medium text-sm">个人开发者</span>
                       </div>
                       <div className="text-2xl font-bold text-blue-600">
-                        {rankings.filter(r => !r.user?.full_name?.includes('公司')).length}
+                        {(rankings ?? []).filter(r => !r.user?.full_name?.includes('公司')).length}
                       </div>
                       <div className="text-xs text-gray-600">活跃个人贡献者</div>
                     </div>
@@ -553,7 +614,7 @@ const OpenSourceProject: React.FC = () => {
                         <span className="font-medium text-sm">企业组织</span>
                       </div>
                       <div className="text-2xl font-bold text-green-600">
-                        {rankings.filter(r => r.user?.full_name?.includes('公司') || r.github_username.includes('corp')).length}
+                        {(rankings ?? []).filter(r => r.user?.full_name?.includes('公司') || r.github_username.includes('corp')).length}
                       </div>
                       <div className="text-xs text-gray-600">参与企业数量</div>
                     </div>
@@ -578,7 +639,7 @@ const OpenSourceProject: React.FC = () => {
                       </div>
                       <div className="text-2xl font-bold text-orange-600">
                         {stats?.total_contributions ? 
-                          Math.round((contributions.filter(c => c.blockchain_hash).length / stats.total_contributions) * 100) : 0}%
+                          Math.round((safeContributions.filter(c => c.blockchain_hash).length / stats.total_contributions) * 100) : 0}%
                       </div>
                       <div className="text-xs text-gray-600">贡献确权比例</div>
                     </div>
@@ -624,7 +685,7 @@ const OpenSourceProject: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {rankings.map((ranking) => (
+                {(rankings ?? []).map((ranking) => (
                   <div key={ranking.user_id} className="flex items-center gap-4 p-4 border rounded-lg">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold">
                       {ranking.rank}
@@ -659,7 +720,7 @@ const OpenSourceProject: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {stats && Object.entries(stats.contribution_types).map(([type, count]) => (
+                  {Object.entries(stats?.contribution_types ?? {}).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
                       <span className="text-sm">{contributionTypeLabels[type as keyof typeof contributionTypeLabels] || type}</span>
                       <div className="flex items-center gap-2">

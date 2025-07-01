@@ -98,7 +98,8 @@ def create_initial_data():
                     name="RWA星球共创项目",
                     github_repo="https://github.com/Eleanorbai/RWADreamLand.git",
                     description="基于GitHub开源协作的RWA平台功能完善项目。通过提交Issue、改进建议获得链上积分奖励，成为平台核心贡献者。",
-                    is_active=True
+                    is_public=True,
+                    creator_id=admin_user.id
                 )
                 db.add(rwa_project)
                 print("✅ 创建RWA星球共创项目")
