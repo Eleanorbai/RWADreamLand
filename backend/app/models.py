@@ -638,34 +638,34 @@ class VerificationStatus(str, Enum):
     REJECTED = "rejected"
 
 # 开源项目基础模型
-class OpenProjectBase(SQLModel):
-    name: str = Field(max_length=100)
-    github_repo: str = Field(max_length=200)
-    description: Optional[str] = Field(default=None)
-    contract_address: Optional[str] = Field(default=None, max_length=66)
-    is_active: bool = Field(default=True)
-
-class OpenProject(OpenProjectBase, table=True):
-    __tablename__ = "open_projects"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: Optional[datetime] = None
-    # 关联关系
-    contributions: List["GitHubContribution"] = Relationship(back_populates="project")
-
-class OpenProjectCreate(OpenProjectBase):
-    pass
-
-class OpenProjectUpdate(SQLModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    contract_address: Optional[str] = None
-    is_active: Optional[bool] = None
-
-class OpenProjectPublic(OpenProjectBase):
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+# class OpenProjectBase(SQLModel):
+#     name: str = Field(max_length=100)
+#     github_repo: str = Field(max_length=200)
+#     description: Optional[str] = Field(default=None)
+#     contract_address: Optional[str] = Field(default=None, max_length=66)
+#     is_active: bool = Field(default=True)
+# 
+# class OpenProject(OpenProjectBase, table=True):
+#     __tablename__ = "open_projects"
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     created_at: datetime = Field(default_factory=datetime.utcnow)
+#     updated_at: Optional[datetime] = None
+#     # 关联关系
+#     contributions: List["GitHubContribution"] = Relationship(back_populates="project")
+# 
+# class OpenProjectCreate(OpenProjectBase):
+#     pass
+# 
+# class OpenProjectUpdate(SQLModel):
+#     name: Optional[str] = None
+#     description: Optional[str] = None
+#     contract_address: Optional[str] = None
+#     is_active: Optional[bool] = None
+# 
+# class OpenProjectPublic(OpenProjectBase):
+#     id: int
+#     created_at: datetime
+#     updated_at: Optional[datetime] = None
 
 # GitHub贡献记录基础模型
 class GitHubContributionBase(SQLModel):
@@ -803,6 +803,8 @@ class OpenProject(SQLModel, table=True):
     # 关系
     members: List["ProjectMember"] = Relationship(back_populates="project")
     tags: List[ProjectTag] = Relationship(back_populates="projects", link_model=ProjectTagLink)
+    # 贡献关系
+    contributions: List["GitHubContribution"] = Relationship(back_populates="project")
 
 class ProjectMember(SQLModel, table=True):
     __tablename__ = "project_members"
