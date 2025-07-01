@@ -46,7 +46,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api", tags=["认证"])
 
 # 笔记相关路由
-@app.post("/notes", response_model=models.NotePublic, tags=["笔记"])
+@app.post("/api/notes", response_model=models.NotePublic, tags=["笔记"])
 def create_note(
     note: models.NoteCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -54,7 +54,7 @@ def create_note(
 ):
     return crud.create_note(db=db, note=note, author_id=current_user.id)
 
-@app.get("/notes", response_model=List[models.NotePublic], tags=["笔记"])
+@app.get("/api/notes", response_model=List[models.NotePublic], tags=["笔记"])
 def read_notes(
     skip: int = 0,
     limit: int = 100,
@@ -68,7 +68,7 @@ def read_notes(
     else:
         return crud.get_notes(db, skip=skip, limit=limit)
 
-@app.get("/notes/my", response_model=List[models.NotePublic], tags=["笔记"])
+@app.get("/api/notes/my", response_model=List[models.NotePublic], tags=["笔记"])
 def read_my_notes(
     skip: int = 0,
     limit: int = 100,
@@ -77,7 +77,7 @@ def read_my_notes(
 ):
     return crud.get_notes_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
 
-@app.get("/notes/{note_id}", response_model=models.NotePublic, tags=["笔记"])
+@app.get("/api/notes/{note_id}", response_model=models.NotePublic, tags=["笔记"])
 def read_note(
     note_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -94,7 +94,7 @@ def read_note(
     
     return db_note
 
-@app.put("/notes/{note_id}", response_model=models.NotePublic, tags=["笔记"])
+@app.put("/api/notes/{note_id}", response_model=models.NotePublic, tags=["笔记"])
 def update_note(
     note_id: int,
     note_update: models.NoteUpdate,
@@ -106,7 +106,7 @@ def update_note(
         raise HTTPException(status_code=404, detail="笔记不存在或无权限修改")
     return db_note
 
-@app.delete("/notes/{note_id}", tags=["笔记"])
+@app.delete("/api/notes/{note_id}", tags=["笔记"])
 def delete_note(
     note_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -117,7 +117,7 @@ def delete_note(
         raise HTTPException(status_code=404, detail="笔记不存在或无权限删除")
     return {"message": "笔记已删除"}
 
-@app.post("/notes/{note_id}/submit", response_model=models.ReviewRequestPublic, tags=["笔记", "审核"])
+@app.post("/api/notes/{note_id}/submit", response_model=models.ReviewRequestPublic, tags=["笔记", "审核"])
 def submit_note_for_review(
     note_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -201,7 +201,7 @@ def create_review(
     return db_review
 
 # 用户管理相关路由（仅管理员）
-@app.get("/users", response_model=List[models.UserPublic], tags=["用户管理"])
+@app.get("/api/users", response_model=List[models.UserPublic], tags=["用户管理"])
 def read_users(
     skip: int = 0,
     limit: int = 100,
@@ -210,7 +210,7 @@ def read_users(
 ):
     return crud.get_users(db, skip=skip, limit=limit)
 
-@app.get("/users/{user_id}", response_model=models.UserPublic, tags=["用户管理"])
+@app.get("/api/users/{user_id}", response_model=models.UserPublic, tags=["用户管理"])
 def read_user(
     user_id: int,
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN])),
@@ -221,7 +221,7 @@ def read_user(
         raise HTTPException(status_code=404, detail="用户不存在")
     return db_user
 
-@app.patch("/users/{user_id}/role", tags=["用户管理"])
+@app.patch("/api/users/{user_id}/role", tags=["用户管理"])
 def update_user_role(
     user_id: int,
     new_role: models.UserRole = Body(..., embed=True),
@@ -243,7 +243,7 @@ def read_root():
     return {"message": "RWA 学习平台后端已启动", "version": "2.0"}
 
 # 标签相关路由
-@app.get("/tags", response_model=List[models.TagPublic], tags=["标签"])
+@app.get("/api/tags", response_model=List[models.TagPublic], tags=["标签"])
 def read_tags(
     skip: int = 0,
     limit: int = 100,
@@ -251,7 +251,7 @@ def read_tags(
 ):
     return crud.get_tags(db, skip=skip, limit=limit)
 
-@app.post("/tags", response_model=models.TagPublic, tags=["标签"])
+@app.post("/api/tags", response_model=models.TagPublic, tags=["标签"])
 def create_tag(
     tag: models.TagCreate,
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
@@ -265,7 +265,7 @@ def create_tag(
     return crud.create_tag(db=db, tag=tag)
 
 # 小组相关路由
-@app.get("/groups", response_model=List[models.GroupWithOwner], tags=["小组"])
+@app.get("/api/groups", response_model=List[models.GroupWithOwner], tags=["小组"])
 def read_groups(
     skip: int = 0,
     limit: int = 100,
@@ -274,14 +274,14 @@ def read_groups(
 ):
     return crud.get_groups(db, skip=skip, limit=limit)
 
-@app.get("/groups/my", response_model=List[models.GroupWithOwner], tags=["小组"])
+@app.get("/api/groups/my", response_model=List[models.GroupWithOwner], tags=["小组"])
 def read_my_groups(
     current_user: models.User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     return crud.get_groups_by_user(db, user_id=current_user.id)
 
-@app.post("/groups", response_model=models.GroupPublic, tags=["小组"])
+@app.post("/api/groups", response_model=models.GroupPublic, tags=["小组"])
 def create_group(
     group: models.GroupCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -289,7 +289,7 @@ def create_group(
 ):
     return crud.create_group(db=db, group=group, owner_id=current_user.id)
 
-@app.get("/groups/{group_id}", response_model=models.GroupWithOwner, tags=["小组"])
+@app.get("/api/groups/{group_id}", response_model=models.GroupWithOwner, tags=["小组"])
 def read_group(
     group_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -305,7 +305,7 @@ def read_group(
     
     return db_group
 
-@app.put("/groups/{group_id}", response_model=models.GroupPublic, tags=["小组"])
+@app.put("/api/groups/{group_id}", response_model=models.GroupPublic, tags=["小组"])
 def update_group(
     group_id: int,
     group_update: models.GroupUpdate,
@@ -317,7 +317,7 @@ def update_group(
         raise HTTPException(status_code=404, detail="小组不存在或无权限修改")
     return db_group
 
-@app.delete("/groups/{group_id}", tags=["小组"])
+@app.delete("/api/groups/{group_id}", tags=["小组"])
 def delete_group(
     group_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -329,7 +329,7 @@ def delete_group(
     return {"message": "小组已删除"}
 
 # 小组成员相关路由
-@app.get("/groups/{group_id}/members", response_model=List[models.GroupMemberWithUser], tags=["小组成员"])
+@app.get("/api/groups/{group_id}/members", response_model=List[models.GroupMemberWithUser], tags=["小组成员"])
 def read_group_members(
     group_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -345,7 +345,7 @@ def read_group_members(
     
     return crud.get_group_members(db, group_id=group_id)
 
-@app.post("/groups/{group_id}/join", response_model=models.GroupMemberPublic, tags=["小组成员"])
+@app.post("/api/groups/{group_id}/join", response_model=models.GroupMemberPublic, tags=["小组成员"])
 def join_group(
     group_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -370,7 +370,7 @@ def join_group(
     
     return member
 
-@app.delete("/groups/{group_id}/leave", tags=["小组成员"])
+@app.delete("/api/groups/{group_id}/leave", tags=["小组成员"])
 def leave_group(
     group_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -388,7 +388,7 @@ def leave_group(
     return {"message": "已离开小组"}
 
 # 内容相关路由
-@app.get("/contents", response_model=List[models.ContentWithDetails], tags=["内容"])
+@app.get("/api/contents", response_model=List[models.ContentWithDetails], tags=["内容"])
 def read_contents(
     skip: int = 0,
     limit: int = 100,
@@ -397,7 +397,7 @@ def read_contents(
 ):
     return crud.get_contents(db, skip=skip, limit=limit, content_type=content_type)
 
-@app.get("/contents/my", response_model=List[models.ContentPublic], tags=["内容"])
+@app.get("/api/contents/my", response_model=List[models.ContentPublic], tags=["内容"])
 def read_my_contents(
     skip: int = 0,
     limit: int = 100,
@@ -406,7 +406,7 @@ def read_my_contents(
 ):
     return crud.get_contents_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
 
-@app.post("/contents", response_model=models.ContentPublic, tags=["内容"])
+@app.post("/api/contents", response_model=models.ContentPublic, tags=["内容"])
 def create_content(
     content: models.ContentCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -414,7 +414,7 @@ def create_content(
 ):
     return crud.create_content(db=db, content=content, author_id=current_user.id)
 
-@app.get("/contents/{content_id}", response_model=models.ContentWithDetails, tags=["内容"])
+@app.get("/api/contents/{content_id}", response_model=models.ContentWithDetails, tags=["内容"])
 def read_content(
     content_id: int,
     current_user: Optional[models.User] = Depends(get_current_active_user),
@@ -430,7 +430,7 @@ def read_content(
     
     return db_content
 
-@app.put("/contents/{content_id}", response_model=models.ContentPublic, tags=["内容"])
+@app.put("/api/contents/{content_id}", response_model=models.ContentPublic, tags=["内容"])
 def update_content(
     content_id: int,
     content_update: models.ContentUpdate,
@@ -442,7 +442,7 @@ def update_content(
         raise HTTPException(status_code=404, detail="内容不存在或无权限修改")
     return db_content
 
-@app.post("/contents/{content_id}/publish", response_model=models.ContentPublic, tags=["内容"])
+@app.post("/api/contents/{content_id}/publish", response_model=models.ContentPublic, tags=["内容"])
 def publish_content(
     content_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -465,7 +465,7 @@ def publish_content(
     
     return db_content
 
-@app.delete("/contents/{content_id}", tags=["内容"])
+@app.delete("/api/contents/{content_id}", tags=["内容"])
 def delete_content(
     content_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -477,7 +477,7 @@ def delete_content(
     return {"message": "内容已删除"}
 
 # 内容点赞相关路由
-@app.post("/contents/{content_id}/like", tags=["内容点赞"])
+@app.post("/api/contents/{content_id}/like", tags=["内容点赞"])
 def toggle_content_like(
     content_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -491,7 +491,7 @@ def toggle_content_like(
     liked = crud.toggle_content_like(db, content_id=content_id, user_id=current_user.id)
     return {"liked": liked, "message": "点赞成功" if liked else "取消点赞成功"}
 
-@app.get("/contents/{content_id}/like-status", tags=["内容点赞"])
+@app.get("/api/contents/{content_id}/like-status", tags=["内容点赞"])
 def get_content_like_status(
     content_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -501,7 +501,7 @@ def get_content_like_status(
     return {"liked": liked}
 
 # 内容标签相关路由
-@app.post("/contents/{content_id}/tags/{tag_id}", tags=["内容标签"])
+@app.post("/api/contents/{content_id}/tags/{tag_id}", tags=["内容标签"])
 def add_content_tag(
     content_id: int,
     tag_id: int,
@@ -524,7 +524,7 @@ def add_content_tag(
     
     return {"message": "标签添加成功"}
 
-@app.delete("/contents/{content_id}/tags/{tag_id}", tags=["内容标签"])
+@app.delete("/api/contents/{content_id}/tags/{tag_id}", tags=["内容标签"])
 def remove_content_tag(
     content_id: int,
     tag_id: int,
@@ -542,7 +542,7 @@ def remove_content_tag(
     
     return {"message": "标签移除成功"}
 
-@app.get("/contents/{content_id}/tags", response_model=List[models.TagPublic], tags=["内容标签"])
+@app.get("/api/contents/{content_id}/tags", response_model=List[models.TagPublic], tags=["内容标签"])
 def get_content_tags(
     content_id: int,
     db: Session = Depends(get_db)
@@ -550,7 +550,7 @@ def get_content_tags(
     return crud.get_content_tags(db, content_id=content_id)
 
 # 讨论相关路由
-@app.get("/discussions", response_model=List[models.DiscussionWithDetails], tags=["讨论"])
+@app.get("/api/discussions", response_model=List[models.DiscussionWithDetails], tags=["讨论"])
 def read_discussions(
     content_id: Optional[int] = None,
     group_id: Optional[int] = None,
@@ -570,7 +570,7 @@ def read_discussions(
     
     return crud.get_discussions(db, content_id=content_id, group_id=group_id, skip=skip, limit=limit)
 
-@app.post("/discussions", response_model=models.DiscussionPublic, tags=["讨论"])
+@app.post("/api/discussions", response_model=models.DiscussionPublic, tags=["讨论"])
 def create_discussion(
     discussion: models.DiscussionCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -583,7 +583,7 @@ def create_discussion(
     
     return crud.create_discussion(db=db, discussion=discussion, author_id=current_user.id)
 
-@app.get("/discussions/{discussion_id}", response_model=models.DiscussionWithDetails, tags=["讨论"])
+@app.get("/api/discussions/{discussion_id}", response_model=models.DiscussionWithDetails, tags=["讨论"])
 def read_discussion(
     discussion_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -601,7 +601,7 @@ def read_discussion(
     
     return db_discussion
 
-@app.put("/discussions/{discussion_id}", response_model=models.DiscussionPublic, tags=["讨论"])
+@app.put("/api/discussions/{discussion_id}", response_model=models.DiscussionPublic, tags=["讨论"])
 def update_discussion(
     discussion_id: int,
     discussion_update: models.DiscussionUpdate,
@@ -613,7 +613,7 @@ def update_discussion(
         raise HTTPException(status_code=404, detail="讨论不存在或无权限修改")
     return db_discussion
 
-@app.delete("/discussions/{discussion_id}", tags=["讨论"])
+@app.delete("/api/discussions/{discussion_id}", tags=["讨论"])
 def delete_discussion(
     discussion_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -625,7 +625,7 @@ def delete_discussion(
     return {"message": "讨论已删除"}
 
 # 评论相关路由
-@app.get("/discussions/{discussion_id}/comments", response_model=List[models.CommentWithDetails], tags=["评论"])
+@app.get("/api/discussions/{discussion_id}/comments", response_model=List[models.CommentWithDetails], tags=["评论"])
 def read_comments(
     discussion_id: int,
     skip: int = 0,
@@ -645,7 +645,7 @@ def read_comments(
     
     return crud.get_comments(db, discussion_id=discussion_id, skip=skip, limit=limit)
 
-@app.post("/comments", response_model=models.CommentPublic, tags=["评论"])
+@app.post("/api/comments", response_model=models.CommentPublic, tags=["评论"])
 def create_comment(
     comment: models.CommentCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -662,7 +662,7 @@ def create_comment(
     
     return crud.create_comment(db=db, comment=comment, author_id=current_user.id)
 
-@app.put("/comments/{comment_id}", response_model=models.CommentPublic, tags=["评论"])
+@app.put("/api/comments/{comment_id}", response_model=models.CommentPublic, tags=["评论"])
 def update_comment(
     comment_id: int,
     comment_update: models.CommentUpdate,
@@ -674,7 +674,7 @@ def update_comment(
         raise HTTPException(status_code=404, detail="评论不存在或无权限修改")
     return db_comment
 
-@app.delete("/comments/{comment_id}", tags=["评论"])
+@app.delete("/api/comments/{comment_id}", tags=["评论"])
 def delete_comment(
     comment_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -686,7 +686,7 @@ def delete_comment(
     return {"message": "评论已删除"}
 
 # 站内信相关路由
-@app.get("/messages", response_model=List[models.MessageWithDetails], tags=["站内信"])
+@app.get("/api/messages", response_model=List[models.MessageWithDetails], tags=["站内信"])
 def read_messages(
     skip: int = 0,
     limit: int = 100,
@@ -695,7 +695,7 @@ def read_messages(
 ):
     return crud.get_messages_for_user(db, user_id=current_user.id, skip=skip, limit=limit)
 
-@app.post("/messages", response_model=models.MessagePublic, tags=["站内信"])
+@app.post("/api/messages", response_model=models.MessagePublic, tags=["站内信"])
 def create_message(
     message: models.MessageCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -703,7 +703,7 @@ def create_message(
 ):
     return crud.create_message(db=db, message=message, sender_id=current_user.id)
 
-@app.put("/messages/{message_id}/read", response_model=models.MessagePublic, tags=["站内信"])
+@app.put("/api/messages/{message_id}/read", response_model=models.MessagePublic, tags=["站内信"])
 def mark_message_read(
     message_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -714,7 +714,7 @@ def mark_message_read(
         raise HTTPException(status_code=404, detail="消息不存在或无权限")
     return db_message
 
-@app.get("/messages/unread-count", tags=["站内信"])
+@app.get("/api/messages/unread-count", tags=["站内信"])
 def get_unread_message_count(
     current_user: models.User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -723,7 +723,7 @@ def get_unread_message_count(
     return {"unread_count": count}
 
 # 区块链记录相关路由
-@app.get("/blockchain-records", response_model=List[models.BlockchainRecordWithDetails], tags=["区块链记录"])
+@app.get("/api/blockchain-records", response_model=List[models.BlockchainRecordWithDetails], tags=["区块链记录"])
 def read_blockchain_records(
     skip: int = 0,
     limit: int = 100,
@@ -733,7 +733,7 @@ def read_blockchain_records(
     return crud.get_blockchain_records_by_user(db, user_id=current_user.id, skip=skip, limit=limit)
 
 # 统计数据相关路由
-@app.get("/stats", response_model=models.PlatformStats, tags=["统计"])
+@app.get("/api/stats", response_model=models.PlatformStats, tags=["统计"])
 def get_platform_stats(
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
     db: Session = Depends(get_db)
@@ -759,7 +759,7 @@ class PasswordChangeRequest(BaseModel):
     old_password: str
     new_password: str
 
-@app.put("/me/password", tags=["用户"])
+@app.put("/api/me/password", tags=["用户"])
 def change_password(
     data: PasswordChangeRequest,
     current_user: models.User = Depends(get_current_active_user),
@@ -777,14 +777,14 @@ def change_password(
 # RWA星球共创项目相关路由
 
 # 开源项目管理路由
-@app.post("/open-projects", response_model=models.OpenProject, tags=["开源项目"])
+@app.post("/api/open-projects", response_model=models.OpenProject, tags=["开源项目"])
 def create_open_project(
     project: models.OpenProjectCreate,
     db: Session = Depends(get_db)
 ):
     return crud.create_open_project(db=db, project=project)
 
-@app.get("/open-projects", response_model=List[models.OpenProjectPublic], tags=["开源项目"])
+@app.get("/api/open-projects", response_model=List[models.OpenProjectPublic], tags=["开源项目"])
 def read_open_projects(
     skip: int = 0,
     limit: int = 100,
@@ -793,7 +793,7 @@ def read_open_projects(
 ):
     return crud.get_open_projects(db, skip=skip, limit=limit, is_active=is_active)
 
-@app.get("/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
+@app.get("/api/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
 def read_open_project(
     project_id: int,
     db: Session = Depends(get_db)
@@ -803,7 +803,7 @@ def read_open_project(
         raise HTTPException(status_code=404, detail="项目不存在")
     return project
 
-@app.put("/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
+@app.put("/api/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
 def update_open_project(
     project_id: int,
     project_update: models.OpenProjectUpdate,
@@ -815,7 +815,7 @@ def update_open_project(
         raise HTTPException(status_code=404, detail="项目不存在")
     return project
 
-@app.delete("/open-projects/{project_id}", tags=["开源项目"])
+@app.delete("/api/open-projects/{project_id}", tags=["开源项目"])
 def delete_open_project(
     project_id: int,
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN])),
@@ -827,7 +827,7 @@ def delete_open_project(
     return {"msg": "项目删除成功"}
 
 # GitHub贡献相关路由
-@app.get("/github-contributions", response_model=List[models.GitHubContributionWithDetails], tags=["GitHub贡献"])
+@app.get("/api/github-contributions", response_model=List[models.GitHubContributionWithDetails], tags=["GitHub贡献"])
 def read_github_contributions(
     project_id: Optional[int] = None,
     user_id: Optional[int] = None,
@@ -840,7 +840,7 @@ def read_github_contributions(
         db, project_id=project_id, user_id=user_id, status=status, skip=skip, limit=limit
     )
 
-@app.get("/github-contributions/{contribution_id}", response_model=models.GitHubContributionWithDetails, tags=["GitHub贡献"])
+@app.get("/api/github-contributions/{contribution_id}", response_model=models.GitHubContributionWithDetails, tags=["GitHub贡献"])
 def read_github_contribution(
     contribution_id: int,
     db: Session = Depends(get_db)
@@ -850,7 +850,7 @@ def read_github_contribution(
         raise HTTPException(status_code=404, detail="贡献记录不存在")
     return contribution
 
-@app.put("/github-contributions/{contribution_id}/accept", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
+@app.put("/api/github-contributions/{contribution_id}/accept", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
 def accept_github_contribution(
     contribution_id: int,
     user_id: Optional[int] = None,
@@ -883,7 +883,7 @@ def accept_github_contribution(
     
     return contribution
 
-@app.put("/github-contributions/{contribution_id}/reject", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
+@app.put("/api/github-contributions/{contribution_id}/reject", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
 def reject_github_contribution(
     contribution_id: int,
     reason: Optional[str] = None,
@@ -896,7 +896,7 @@ def reject_github_contribution(
         raise HTTPException(status_code=404, detail="贡献记录不存在或已处理")
     return contribution
 
-@app.get("/admin/github-contributions", response_model=List[models.GitHubContributionPublic], tags=["GitHub贡献"])
+@app.get("/api/admin/github-contributions", response_model=List[models.GitHubContributionPublic], tags=["GitHub贡献"])
 def list_github_contributions_admin(
     project_id: Optional[int] = None,
     status: Optional[models.ContributionStatus] = None,
@@ -916,7 +916,7 @@ def list_github_contributions_admin(
         limit=limit
     )
 
-@app.get("/github-contributions/stats", tags=["GitHub贡献"])
+@app.get("/api/github-contributions/stats", tags=["GitHub贡献"])
 def get_github_contributions_stats(
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
     db: Session = Depends(get_db)
@@ -925,7 +925,7 @@ def get_github_contributions_stats(
     return crud.get_github_contributions_stats(db)
 
 # GitHub Webhook端点
-@app.post("/github/webhook", tags=["GitHub集成"])
+@app.post("/api/github/webhook", tags=["GitHub集成"])
 async def github_webhook(
     request: Request,
     db: Session = Depends(get_db)
@@ -955,7 +955,7 @@ async def github_webhook(
     
     return {"status": "processed", "contribution_id": result.id if result else None}
 
-@app.post("/github/sync/{project_id}", tags=["GitHub集成"])
+@app.post("/api/github/sync/{project_id}", tags=["GitHub集成"])
 def sync_github_contributions(
     project_id: int,
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
@@ -967,7 +967,7 @@ def sync_github_contributions(
     return {"msg": f"同步完成，新增 {synced_count} 条贡献记录"}
 
 # 贡献者管理路由
-@app.post("/contributor-profile", response_model=models.ContributorProfilePublic, tags=["贡献者"])
+@app.post("/api/contributor-profile", response_model=models.ContributorProfilePublic, tags=["贡献者"])
 def create_contributor_profile(
     profile: models.ContributorProfileCreate,
     current_user: models.User = Depends(get_current_active_user),
@@ -980,7 +980,7 @@ def create_contributor_profile(
     
     return crud.create_contributor_profile(db=db, user_id=current_user.id, profile=profile)
 
-@app.get("/contributor-profile", response_model=models.ContributorProfileWithDetails, tags=["贡献者"])
+@app.get("/api/contributor-profile", response_model=models.ContributorProfileWithDetails, tags=["贡献者"])
 def read_my_contributor_profile(
     current_user: models.User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -990,7 +990,7 @@ def read_my_contributor_profile(
         raise HTTPException(status_code=404, detail="贡献者资料不存在")
     return profile
 
-@app.put("/contributor-profile", response_model=models.ContributorProfilePublic, tags=["贡献者"])
+@app.put("/api/contributor-profile", response_model=models.ContributorProfilePublic, tags=["贡献者"])
 def update_my_contributor_profile(
     profile_update: models.ContributorProfileUpdate,
     current_user: models.User = Depends(get_current_active_user),
@@ -1001,14 +1001,14 @@ def update_my_contributor_profile(
         raise HTTPException(status_code=404, detail="贡献者资料不存在")
     return profile
 
-@app.get("/contributors/rankings", response_model=List[models.ContributorRanking], tags=["贡献者"])
+@app.get("/api/contributors/rankings", response_model=List[models.ContributorRanking], tags=["贡献者"])
 def read_contributor_rankings(
     limit: int = 50,
     db: Session = Depends(get_db)
 ):
     return crud.get_contributor_rankings(db, limit=limit)
 
-@app.get("/contributors/{user_id}/contributions", response_model=List[models.GitHubContributionPublic], tags=["贡献者"])
+@app.get("/api/contributors/{user_id}/contributions", response_model=List[models.GitHubContributionPublic], tags=["贡献者"])
 def read_user_contributions(
     user_id: int,
     skip: int = 0,
@@ -1018,7 +1018,7 @@ def read_user_contributions(
     return crud.get_github_contributions(db, user_id=user_id, skip=skip, limit=limit)
 
 # 项目统计路由
-@app.get("/open-projects/{project_id}/stats", response_model=models.ProjectStats, tags=["开源项目"])
+@app.get("/api/open-projects/{project_id}/stats", response_model=models.ProjectStats, tags=["开源项目"])
 def read_project_stats(
     project_id: int,
     db: Session = Depends(get_db)
@@ -1029,7 +1029,7 @@ def read_project_stats(
     return stats
 
 # 实时贡献动态API
-@app.get("/open-projects/{project_id}/recent-activities", tags=["开源项目"])
+@app.get("/api/open-projects/{project_id}/recent-activities", tags=["开源项目"])
 def read_recent_activities(
     project_id: int,
     limit: int = 20,
@@ -1061,7 +1061,7 @@ def read_recent_activities(
     return {"activities": activities}
 
 # 区块链记录详情API
-@app.get("/blockchain-records/{record_id}", response_model=models.BlockchainRecordWithDetails, tags=["区块链记录"])
+@app.get("/api/blockchain-records/{record_id}", response_model=models.BlockchainRecordWithDetails, tags=["区块链记录"])
 def read_blockchain_record_detail(
     record_id: int,
     db: Session = Depends(get_db)
@@ -1073,7 +1073,7 @@ def read_blockchain_record_detail(
     return record
 
 # 用户贡献统计API
-@app.get("/users/{user_id}/contribution-stats", tags=["用户"])
+@app.get("/api/users/{user_id}/contribution-stats", tags=["用户"])
 def read_user_contribution_stats(
     user_id: int,
     db: Session = Depends(get_db)
@@ -1131,7 +1131,7 @@ def read_user_contribution_stats(
 # ========== 项目成员管理 ==========
 from fastapi import Path
 
-@app.get("/open-projects/{project_id}/members", tags=["项目成员"])
+@app.get("/api/open-projects/{project_id}/members", tags=["项目成员"])
 def list_project_members(
     project_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -1147,7 +1147,7 @@ def list_project_members(
             raise HTTPException(403, "无权查看私有项目成员")
     return crud.list_members(db, project_id)
 
-@app.post("/open-projects/{project_id}/members", tags=["项目成员"])
+@app.post("/api/open-projects/{project_id}/members", tags=["项目成员"])
 def apply_project_member(
     project_id: int,
     current_user: models.User = Depends(get_current_active_user),
@@ -1161,7 +1161,7 @@ def apply_project_member(
     new_member = crud.add_member(db, project_id, current_user.id, role="MEMBER", status="PENDING")
     return new_member
 
-@app.delete("/open-projects/{project_id}/members/{member_id}", tags=["项目成员"])
+@app.delete("/api/open-projects/{project_id}/members/{member_id}", tags=["项目成员"])
 def remove_project_member(
     project_id: int,
     member_id: int,
@@ -1176,7 +1176,7 @@ def remove_project_member(
 
 # ========== 项目邀请管理 ==========
 
-@app.post("/open-projects/{project_id}/invites", tags=["项目邀请"])
+@app.post("/api/open-projects/{project_id}/invites", tags=["项目邀请"])
 def create_project_invite(
     project_id: int,
     invitee_id: int = Body(...),
@@ -1193,7 +1193,7 @@ def create_project_invite(
     notify_project_invite(db, invitee_id, project.name)
     return invite
 
-@app.get("/open-projects/{project_id}/invites", tags=["项目邀请"])
+@app.get("/api/open-projects/{project_id}/invites", tags=["项目邀请"])
 def list_project_invites(
     project_id: int,
     status: Optional[str] = None,
@@ -1206,7 +1206,7 @@ def list_project_invites(
         raise HTTPException(403, "仅项目成员可查看邀请")
     return crud.list_invites(db, project_id, status)
 
-@app.post("/open-projects/{project_id}/invites/{invite_id}/approve", tags=["项目邀请"])
+@app.post("/api/open-projects/{project_id}/invites/{invite_id}/approve", tags=["项目邀请"])
 def approve_project_invite(
     project_id: int,
     invite_id: int,
@@ -1230,7 +1230,7 @@ def approve_project_invite(
     notify_project_invite_approved(db, invite.inviter_id, current_user.username, project.name)
     return {"success": True}
 
-@app.post("/open-projects/{project_id}/invites/{invite_id}/reject", tags=["项目邀请"])
+@app.post("/api/open-projects/{project_id}/invites/{invite_id}/reject", tags=["项目邀请"])
 def reject_project_invite(
     project_id: int,
     invite_id: int,
@@ -1254,13 +1254,13 @@ def reject_project_invite(
 
 # ========== 项目标签管理 ==========
 
-@app.get("/project-tags", tags=["项目标签"])
+@app.get("/api/project-tags", tags=["项目标签"])
 def list_project_tags(
     db: Session = Depends(get_db)
 ):
     return crud.list_tags(db)
 
-@app.post("/project-tags", tags=["项目标签"])
+@app.post("/api/project-tags", tags=["项目标签"])
 def create_project_tag(
     name: str = Body(...),
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
@@ -1268,7 +1268,7 @@ def create_project_tag(
 ):
     return crud.create_tag(db, name)
 
-@app.delete("/project-tags/{tag_id}", tags=["项目标签"])
+@app.delete("/api/project-tags/{tag_id}", tags=["项目标签"])
 def delete_project_tag(
     tag_id: int,
     current_user: models.User = Depends(require_role([models.UserRole.ADMIN])),
@@ -1282,7 +1282,7 @@ def delete_project_tag(
     db.commit()
     return {"success": True}
 
-@app.post("/open-projects/{project_id}/tags/{tag_id}", tags=["项目标签"])
+@app.post("/api/open-projects/{project_id}/tags/{tag_id}", tags=["项目标签"])
 def add_tag_to_project(
     project_id: int,
     tag_id: int,
@@ -1296,7 +1296,7 @@ def add_tag_to_project(
     crud.add_tag_to_project(db, project_id, tag_id)
     return {"success": True}
 
-@app.delete("/open-projects/{project_id}/tags/{tag_id}", tags=["项目标签"])
+@app.delete("/api/open-projects/{project_id}/tags/{tag_id}", tags=["项目标签"])
 def remove_tag_from_project(
     project_id: int,
     tag_id: int,

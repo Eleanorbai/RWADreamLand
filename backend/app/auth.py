@@ -10,7 +10,7 @@ from .database import get_db
 from .config import settings
 from .utils import get_password_hash, verify_password
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 router = APIRouter()
 
@@ -82,8 +82,10 @@ def register(user: models.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=models.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    print("收到登录请求:", form_data.username, form_data.password)
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
+        print("用户名或密码错误")
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
@@ -94,7 +96,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.get("/me", response_model=models.UserPublic)
 def read_users_me(current_user: models.User = Depends(get_current_active_user)):
-    print("访问了 /users/me")
+    print("访问了 /api/me")
     return current_user
 
 @router.put("/me", response_model=models.UserPublic)
