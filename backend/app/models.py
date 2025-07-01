@@ -113,7 +113,7 @@ class Note(NoteBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     # 关联关系
-    author: Optional[User] = Relationship(back_populates="notes")
+    author: Optional["User"] = Relationship(back_populates="notes")
     review_requests: List["ReviewRequest"] = Relationship(back_populates="note")
     contents: List["Content"] = Relationship(back_populates="note")
 
@@ -153,8 +153,8 @@ class ReviewRequest(ReviewRequestBase, table=True):
     review_comment: Optional[str] = None
     
     # 关联关系
-    note: Optional[Note] = Relationship(back_populates="review_requests")
-    author: Optional[User] = Relationship(
+    note: Optional["Note"] = Relationship(back_populates="review_requests")
+    author: Optional["User"] = Relationship(
         back_populates="review_requests",
         sa_relationship_kwargs={"foreign_keys": "ReviewRequest.author_id"}
     )
@@ -192,8 +192,8 @@ class Review(ReviewBase, table=True):
     reviewed_at: datetime = Field(default_factory=datetime.utcnow)
     
     # 关联关系
-    review_request: Optional[ReviewRequest] = Relationship(back_populates="reviews")
-    reviewer: Optional[User] = Relationship(back_populates="reviews")
+    review_request: Optional["ReviewRequest"] = Relationship(back_populates="reviews")
+    reviewer: Optional["User"] = Relationship(back_populates="reviews")
 
 # 审核创建模型
 class ReviewCreate(ReviewBase):
@@ -235,7 +235,7 @@ class Group(GroupBase, table=True):
     member_count: int = Field(default=1)  # 成员数量
     
     # 关联关系
-    owner: Optional[User] = Relationship()
+    owner: Optional["User"] = Relationship()
     members: List["GroupMember"] = Relationship(back_populates="group")
     discussions: List["Discussion"] = Relationship(back_populates="group")
 
@@ -271,8 +271,8 @@ class GroupMember(GroupMemberBase, table=True):
     joined_at: datetime = Field(default_factory=datetime.utcnow)
     
     # 关联关系
-    group: Optional[Group] = Relationship(back_populates="members")
-    user: Optional[User] = Relationship()
+    group: Optional["Group"] = Relationship(back_populates="members")
+    user: Optional["User"] = Relationship()
     role: GroupRole = Field(default=GroupRole.MEMBER)
 
 class GroupMemberCreate(SQLModel):
@@ -334,8 +334,8 @@ class Content(ContentBase, table=True):
     like_count: int = Field(default=0)
 
     # 关联关系
-    author: Optional[User] = Relationship(back_populates="contents")
-    note: Optional[Note] = Relationship(back_populates="contents")
+    author: Optional["User"] = Relationship(back_populates="contents")
+    note: Optional["Note"] = Relationship(back_populates="contents")
     tags: List["ContentTag"] = Relationship(back_populates="content")
     likes: List["ContentLike"] = Relationship(back_populates="content")
     views: List["ContentView"] = Relationship(back_populates="content")
@@ -373,8 +373,8 @@ class ContentTag(ContentTagBase, table=True):
     tag_id: int = Field(foreign_key="tags.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     # 关联关系
-    content: Optional[Content] = Relationship(back_populates="tags")
-    tag: Optional[Tag] = Relationship(back_populates="content_tags")
+    content: Optional["Content"] = Relationship(back_populates="tags")
+    tag: Optional["Tag"] = Relationship(back_populates="content_tags")
 
 class ContentTagCreate(SQLModel):
     content_id: int
@@ -397,8 +397,8 @@ class ContentLike(ContentLikeBase, table=True):
     user_id: int = Field(foreign_key="users.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     # 关联关系
-    content: Optional[Content] = Relationship(back_populates="likes")
-    user: Optional[User] = Relationship()
+    content: Optional["Content"] = Relationship(back_populates="likes")
+    user: Optional["User"] = Relationship()
 
 class ContentLikeCreate(SQLModel):
     content_id: int
@@ -421,8 +421,8 @@ class ContentView(ContentViewBase, table=True):
     ip_address: Optional[str] = Field(default=None, max_length=45)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     # 关联关系
-    content: Optional[Content] = Relationship(back_populates="views")
-    user: Optional[User] = Relationship()
+    content: Optional["Content"] = Relationship(back_populates="views")
+    user: Optional["User"] = Relationship()
 
 class ContentViewCreate(SQLModel):
     content_id: int
@@ -453,8 +453,8 @@ class Discussion(DiscussionBase, table=True):
     is_pinned: bool = Field(default=False)
     reply_count: int = Field(default=0)
     # 关联关系
-    author: Optional[User] = Relationship(back_populates="discussions")
-    content: Optional[Content] = Relationship(back_populates="discussions")
+    author: Optional["User"] = Relationship(back_populates="discussions")
+    content: Optional["Content"] = Relationship(back_populates="discussions")
     group: Optional["Group"] = Relationship(back_populates="discussions")
 
 class DiscussionCreate(DiscussionBase):
@@ -688,7 +688,7 @@ class GitHubContribution(GitHubContributionBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
     # 关联关系
-    project: Optional[OpenProject] = Relationship(back_populates="contributions")
+    project: Optional["OpenProject"] = Relationship(back_populates="contributions")
     user: Optional["User"] = Relationship()
 
 class GitHubContributionCreate(GitHubContributionBase):
@@ -709,7 +709,7 @@ class GitHubContributionPublic(GitHubContributionBase):
     updated_at: Optional[datetime] = None
 
 class GitHubContributionWithDetails(GitHubContributionPublic):
-    project: Optional[OpenProjectPublic] = None
+    project: Optional["OpenProjectPublic"] = None
     user: Optional["UserPublic"] = None
 
 # 贡献者身份基础模型
@@ -802,7 +802,7 @@ class OpenProject(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     # 关系
     members: List["ProjectMember"] = Relationship(back_populates="project")
-    tags: List[ProjectTag] = Relationship(back_populates="projects", link_model=ProjectTagLink)
+    tags: List["ProjectTag"] = Relationship(back_populates="projects", link_model=ProjectTagLink)
     # 贡献关系
     contributions: List["GitHubContribution"] = Relationship(back_populates="project")
 
@@ -815,7 +815,7 @@ class ProjectMember(SQLModel, table=True):
     status: str = Field(default="APPROVED", max_length=20)  # PENDING/APPROVED/REJECTED
     joined_at: datetime = Field(default_factory=datetime.utcnow)
     # 关系
-    project: Optional[OpenProject] = Relationship(back_populates="members")
+    project: Optional["OpenProject"] = Relationship(back_populates="members")
 
 class ProjectInvite(SQLModel, table=True):
     __tablename__ = "project_invites"
