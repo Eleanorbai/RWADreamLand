@@ -18,7 +18,7 @@ export default function Login() {
       params.append("username", form.username);
       params.append("password", form.password);
       // FastAPI OAuth2PasswordRequestForm 需要 x-www-form-urlencoded
-      const res = await axios.post("http://localhost:8000/login", params, {
+      const res = await axios.post("http://localhost:8000/api/login", params, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
       });
       localStorage.setItem("token", res.data.access_token);

@@ -35,7 +35,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setLoading(true);
         // 假设有token，后端 /me 返回当前用户
-        const res = await axios.get("/me");
+        const res = await axios.get("/api/me");
         setUser(res.data);
       } catch {
         setUser(null);

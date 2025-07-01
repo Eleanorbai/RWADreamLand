@@ -36,14 +36,14 @@ app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads"
 # 允许跨域
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # 或指定你的前端地址如 ["http://localhost:5173"]
+    allow_origins=settings.cors_origins,  # 或指定你的前端地址如 ["http://localhost:5173"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 包含认证路由
-app.include_router(auth_router, tags=["认证"])
+app.include_router(auth_router, prefix="/api", tags=["认证"])
 
 # 笔记相关路由
 @app.post("/notes", response_model=models.NotePublic, tags=["笔记"])

@@ -12,7 +12,7 @@ export default function Register() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8000/register", form);
+      await axios.post("http://localhost:8000/api/register", form);
       setMsg("注册成功，请去登录！");
     } catch (err) {
       setMsg(err.response?.data?.detail || "注册失败");
