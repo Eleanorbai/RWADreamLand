@@ -595,12 +595,24 @@ export default function Me({}: MePageProps) {
                     <div className="mt-6">
                       <h4 className="text-sm font-medium text-gray-900 mb-3">贡献类型分布</h4>
                       <div className="space-y-2">
-                        {contributionStats.contribution_types && Object.entries(contributionStats.contribution_types).map(([type, count]) => (
-                          <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-sm text-gray-700">{type}</span>
-                            <span className="text-sm font-medium text-gray-900">{count as number}次</span>
-                          </div>
-                        ))}
+                        {contributionStats.contribution_types && Object.entries(contributionStats.contribution_types).map(([type, stat]) => {
+                          if (typeof stat === 'object' && stat !== null && 'count' in stat && 'points' in stat) {
+                            const s = stat as { count: number; points: number };
+                            return (
+                              <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm text-gray-700">{type}</span>
+                                <span className="text-sm font-medium text-gray-900">{s.count}次 / {s.points}分</span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm text-gray-700">{type}</span>
+                                <span className="text-sm font-medium text-gray-900">-</span>
+                              </div>
+                            );
+                          }
+                        })}
                       </div>
                     </div>
                   </div>

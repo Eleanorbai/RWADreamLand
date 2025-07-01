@@ -476,7 +476,7 @@ export const openSourceApi = {
     return response.data;
   },
 
-  // GitHub贡献管理
+  // GitHub贡献管理（管理员使用）
   getContributions: async (
     projectId?: number,
     userId?: number,
@@ -492,7 +492,7 @@ export const openSourceApi = {
     if (userId) params.append('user_id', userId.toString());
     if (status) params.append('status', status);
     
-    const response = await api.get(`/github-contributions?${params}`);
+    const response = await api.get(`/admin/github-contributions?${params}`);
     return response.data;
   },
 
@@ -504,6 +504,17 @@ export const openSourceApi = {
   acceptContribution: async (contributionId: number, userId?: number): Promise<GitHubContribution> => {
     const data = userId ? { user_id: userId } : {};
     const response = await api.put(`/github-contributions/${contributionId}/accept`, data);
+    return response.data;
+  },
+
+  rejectContribution: async (contributionId: number, reason?: string): Promise<GitHubContribution> => {
+    const data = reason ? { reason } : {};
+    const response = await api.put(`/github-contributions/${contributionId}/reject`, data);
+    return response.data;
+  },
+
+  getContributionStats: async (): Promise<any> => {
+    const response = await api.get('/github-contributions/stats');
     return response.data;
   },
 

@@ -16,6 +16,7 @@ from app.database import create_tables, engine
 from app.models import User, Tag, UserRole, OpenProject
 from app.utils import get_password_hash
 from sqlmodel import Session, select
+from datetime import datetime, timedelta
 
 def create_initial_data():
     """创建初始数据"""
@@ -101,6 +102,189 @@ def create_initial_data():
                 )
                 db.add(rwa_project)
                 print("✅ 创建RWA星球共创项目")
+            
+            # 创建模拟贡献者资料和贡献记录来展示多方参与
+            from app.models import ContributorProfile, GitHubContribution, ContributorType, ContributionType, ContributionStatus
+            import random
+            from datetime import timedelta
+            
+            # 模拟贡献者数据
+            mock_contributors = [
+                {
+                    "user_id": admin_user.id,
+                    "github_username": "tech_innovator_2024",
+                    "contributor_type": ContributorType.INDIVIDUAL,
+                    "organization_name": None,
+                    "total_contributions": 15,
+                    "total_points": 750,
+                    "reputation_score": 850.0
+                },
+                {
+                    "user_id": reviewer_user.id,
+                    "github_username": "blockchain_solutions_corp",
+                    "contributor_type": ContributorType.ORGANIZATION,
+                    "organization_name": "区块链解决方案有限公司",
+                    "total_contributions": 28,
+                    "total_points": 1200,
+                    "reputation_score": 1160.0
+                },
+                {
+                    "user_id": community_manager.id,
+                    "github_username": "fintech_developer",
+                    "contributor_type": ContributorType.INDIVIDUAL,
+                    "organization_name": None,
+                    "total_contributions": 22,
+                    "total_points": 980,
+                    "reputation_score": 992.0
+                }
+            ]
+            
+            # 创建贡献者资料
+            for contributor_data in mock_contributors:
+                existing_profile = db.exec(
+                    select(ContributorProfile).where(ContributorProfile.user_id == contributor_data["user_id"])
+                ).first()
+                if not existing_profile:
+                    profile = ContributorProfile(**contributor_data)
+                    db.add(profile)
+                    print(f"✅ 创建贡献者资料: {contributor_data['github_username']}")
+            
+            # 创建模拟GitHub贡献记录
+            if rwa_project:
+                mock_contributions = [
+                    {
+                        "project_id": rwa_project.id,
+                        "user_id": admin_user.id,
+                        "github_username": "tech_innovator_2024",
+                        "issue_number": 1,
+                        "issue_title": "优化用户界面响应速度",
+                        "issue_url": "https://github.com/Eleanorbai/RWADreamLand/issues/1",
+                        "contribution_type": ContributionType.UI_UX_IMPROVEMENT,
+                        "contribution_points": 25,
+                        "status": ContributionStatus.ACCEPTED,
+                        "blockchain_hash": "0x1a2b3c4d5e6f7890abcdef1234567890abcdef12",
+                        "github_created_at": datetime.utcnow() - timedelta(days=5),
+                        "accepted_at": datetime.utcnow() - timedelta(days=4)
+                    },
+                    {
+                        "project_id": rwa_project.id,
+                        "user_id": reviewer_user.id,
+                        "github_username": "blockchain_solutions_corp",
+                        "issue_number": 2,
+                        "issue_title": "实现FISCO BCOS智能合约集成",
+                        "issue_url": "https://github.com/Eleanorbai/RWADreamLand/issues/2",
+                        "contribution_type": ContributionType.CODE_CONTRIBUTION,
+                        "contribution_points": 50,
+                        "status": ContributionStatus.ACCEPTED,
+                        "blockchain_hash": "0x2b3c4d5e6f7890abcdef1234567890abcdef1234",
+                        "github_created_at": datetime.utcnow() - timedelta(days=3),
+                        "accepted_at": datetime.utcnow() - timedelta(days=2)
+                    },
+                    {
+                        "project_id": rwa_project.id,
+                        "user_id": community_manager.id,
+                        "github_username": "fintech_developer",
+                        "issue_number": 3,
+                        "issue_title": "完善API文档和使用示例",
+                        "issue_url": "https://github.com/Eleanorbai/RWADreamLand/issues/3",
+                        "contribution_type": ContributionType.DOCUMENTATION,
+                        "contribution_points": 20,
+                        "status": ContributionStatus.ACCEPTED,
+                        "blockchain_hash": "0x3c4d5e6f7890abcdef1234567890abcdef123456",
+                        "github_created_at": datetime.utcnow() - timedelta(days=2),
+                        "accepted_at": datetime.utcnow() - timedelta(days=1)
+                    },
+                    {
+                        "project_id": rwa_project.id,
+                        "user_id": admin_user.id,
+                        "github_username": "tech_innovator_2024",
+                        "issue_number": 4,
+                        "issue_title": "修复移动端样式显示问题",
+                        "issue_url": "https://github.com/Eleanorbai/RWADreamLand/issues/4",
+                        "contribution_type": ContributionType.BUG_REPORT,
+                        "contribution_points": 10,
+                        "status": ContributionStatus.ACCEPTED,
+                        "blockchain_hash": "0x4d5e6f7890abcdef1234567890abcdef12345678",
+                        "github_created_at": datetime.utcnow() - timedelta(days=1),
+                        "accepted_at": datetime.utcnow() - timedelta(hours=12)
+                    },
+                    {
+                        "project_id": rwa_project.id,
+                        "user_id": reviewer_user.id,
+                        "github_username": "blockchain_solutions_corp",
+                        "issue_number": 5,
+                        "issue_title": "建议增加多语言支持功能",
+                        "issue_url": "https://github.com/Eleanorbai/RWADreamLand/issues/5",
+                        "contribution_type": ContributionType.FEATURE_REQUEST,
+                        "contribution_points": 15,
+                        "status": ContributionStatus.PENDING,
+                        "blockchain_hash": None,
+                        "github_created_at": datetime.utcnow() - timedelta(hours=6),
+                        "accepted_at": None
+                    }
+                ]
+                
+                for contribution_data in mock_contributions:
+                    existing_contribution = db.exec(
+                        select(GitHubContribution).where(
+                            GitHubContribution.project_id == contribution_data["project_id"],
+                            GitHubContribution.issue_number == contribution_data["issue_number"]
+                        )
+                    ).first()
+                    if not existing_contribution:
+                        contribution = GitHubContribution(**contribution_data)
+                        db.add(contribution)
+                        print(f"✅ 创建模拟贡献记录: Issue #{contribution_data['issue_number']}")
+                
+                # 创建区块链记录
+                from app.models import BlockchainRecord, BlockchainAction
+                blockchain_records = [
+                    {
+                        "user_id": admin_user.id,
+                        "action": BlockchainAction.CONTRIBUTION_RECORD,
+                        "description": "GitHub贡献确认: 优化用户界面响应速度",
+                        "points_amount": 25,
+                        "transaction_hash": "0x1a2b3c4d5e6f7890abcdef1234567890abcdef12",
+                        "block_number": 12345678,
+                        "gas_used": 21000,
+                        "is_confirmed": True,
+                        "confirmed_at": datetime.utcnow() - timedelta(days=4)
+                    },
+                    {
+                        "user_id": reviewer_user.id,
+                        "action": BlockchainAction.CONTRIBUTION_RECORD,
+                        "description": "GitHub贡献确认: 实现FISCO BCOS智能合约集成",
+                        "points_amount": 50,
+                        "transaction_hash": "0x2b3c4d5e6f7890abcdef1234567890abcdef1234",
+                        "block_number": 12345679,
+                        "gas_used": 31000,
+                        "is_confirmed": True,
+                        "confirmed_at": datetime.utcnow() - timedelta(days=2)
+                    },
+                    {
+                        "user_id": community_manager.id,
+                        "action": BlockchainAction.CONTRIBUTION_RECORD,
+                        "description": "GitHub贡献确认: 完善API文档和使用示例",
+                        "points_amount": 20,
+                        "transaction_hash": "0x3c4d5e6f7890abcdef1234567890abcdef123456",
+                        "block_number": 12345680,
+                        "gas_used": 25000,
+                        "is_confirmed": True,
+                        "confirmed_at": datetime.utcnow() - timedelta(days=1)
+                    }
+                ]
+                
+                for record_data in blockchain_records:
+                    existing_record = db.exec(
+                        select(BlockchainRecord).where(
+                            BlockchainRecord.transaction_hash == record_data["transaction_hash"]
+                        )
+                    ).first()
+                    if not existing_record:
+                        record = BlockchainRecord(**record_data)
+                        db.add(record)
+                        print(f"✅ 创建区块链记录: {record_data['transaction_hash'][:10]}...")
+            
             
             # 提交所有更改
             db.commit()

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@types/react-window": "^1.8.8",
+    "date-fns": "^4.1.0",
+    "highcharts": "^12.3.0",
+    "highcharts-react-official": "^3.2.2",
+    "react-window": "^1.8.11"
+  }
+}

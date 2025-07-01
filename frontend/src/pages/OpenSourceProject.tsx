@@ -6,27 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { 
-  ExternalLink, 
-  GitHub, 
-  Users, 
-  Trophy, 
-  Star, 
-  GitBranch,
-  Calendar,
-  Award,
-  TrendingUp,
-  Shield,
-  Link,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Activity,
-  Building,
-  User,
-  Zap,
-  ArrowRight
-} from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { openSourceApi } from '@/lib/api';
 import { 
   OpenProject, 
@@ -136,7 +116,7 @@ const OpenSourceProject: React.FC = () => {
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                <GitBranch className="h-6 w-6" />
+                <Icons.GitBranch className="h-6 w-6" />
                 {project.name}
               </CardTitle>
               <p className="text-gray-600">{project.description}</p>
@@ -147,12 +127,12 @@ const OpenSourceProject: React.FC = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:text-blue-600"
                 >
-                  <GitHub className="h-4 w-4" />
+                  <Icons.Github className="h-4 w-4" />
                   GitHub仓库
-                  <ExternalLink className="h-3 w-3" />
+                  <Icons.ExternalLink className="h-3 w-3" />
                 </a>
                 <span className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
+                  <Icons.Calendar className="h-4 w-4" />
                   创建于 {new Date(project.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -179,7 +159,7 @@ const OpenSourceProject: React.FC = () => {
                   <p className="text-sm font-medium text-gray-600">总贡献数</p>
                   <p className="text-2xl font-bold">{stats.total_contributions}</p>
                 </div>
-                <GitBranch className="h-8 w-8 text-blue-600" />
+                <Icons.GitBranch className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
@@ -190,7 +170,7 @@ const OpenSourceProject: React.FC = () => {
                   <p className="text-sm font-medium text-gray-600">贡献者数</p>
                   <p className="text-2xl font-bold">{stats.total_contributors}</p>
                 </div>
-                <Users className="h-8 w-8 text-green-600" />
+                <Icons.Users className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -201,7 +181,7 @@ const OpenSourceProject: React.FC = () => {
                   <p className="text-sm font-medium text-gray-600">总积分</p>
                   <p className="text-2xl font-bold">{stats.total_points}</p>
                 </div>
-                <Star className="h-8 w-8 text-yellow-600" />
+                <Icons.Star className="h-8 w-8 text-yellow-600" />
               </div>
             </CardContent>
           </Card>
@@ -212,7 +192,7 @@ const OpenSourceProject: React.FC = () => {
                   <p className="text-sm font-medium text-gray-600">活跃度</p>
                   <p className="text-2xl font-bold text-green-600">高</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-purple-600" />
+                <Icons.TrendingUp className="h-8 w-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -293,7 +273,7 @@ const OpenSourceProject: React.FC = () => {
                           {contributor.contributions}个贡献 · {contributor.points}积分
                         </p>
                       </div>
-                      <Award className="h-4 w-4 text-yellow-600" />
+                      <Icons.Award className="h-4 w-4 text-yellow-600" />
                     </div>
                   ))}
                 </div>
@@ -360,7 +340,7 @@ const OpenSourceProject: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-blue-600" />
+                  <Icons.Shield className="h-5 w-5 text-blue-600" />
                   贡献确权流程
                 </CardTitle>
               </CardHeader>
@@ -372,11 +352,11 @@ const OpenSourceProject: React.FC = () => {
                       <p className="font-medium">GitHub提交</p>
                       <p className="text-sm text-gray-600">在GitHub仓库提交Issue或PR</p>
                     </div>
-                    <GitHub className="h-5 w-5 text-blue-600 ml-auto" />
+                    <Icons.Github className="h-5 w-5 text-blue-600 ml-auto" />
                   </div>
                   
                   <div className="flex justify-center">
-                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                    <Icons.ArrowRight className="h-5 w-5 text-gray-400" />
                   </div>
                   
                   <div className="flex items-center gap-3 p-3 border rounded-lg bg-green-50">
@@ -385,11 +365,11 @@ const OpenSourceProject: React.FC = () => {
                       <p className="font-medium">社区审核</p>
                       <p className="text-sm text-gray-600">管理员审核并接受贡献</p>
                     </div>
-                    <CheckCircle className="h-5 w-5 text-green-600 ml-auto" />
+                    <Icons.CheckCircle className="h-5 w-5 text-green-600 ml-auto" />
                   </div>
                   
                   <div className="flex justify-center">
-                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                    <Icons.ArrowRight className="h-5 w-5 text-gray-400" />
                   </div>
                   
                   <div className="flex items-center gap-3 p-3 border rounded-lg bg-purple-50">
@@ -398,11 +378,11 @@ const OpenSourceProject: React.FC = () => {
                       <p className="font-medium">链上确权</p>
                       <p className="text-sm text-gray-600">贡献记录永久上链存储</p>
                     </div>
-                    <Link className="h-5 w-5 text-purple-600 ml-auto" />
+                    <Icons.Link className="h-5 w-5 text-purple-600 ml-auto" />
                   </div>
                   
                   <div className="flex justify-center">
-                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                    <Icons.ArrowRight className="h-5 w-5 text-gray-400" />
                   </div>
                   
                   <div className="flex items-center gap-3 p-3 border rounded-lg bg-yellow-50">
@@ -411,7 +391,7 @@ const OpenSourceProject: React.FC = () => {
                       <p className="font-medium">积分奖励</p>
                       <p className="text-sm text-gray-600">获得对应积分和声誉提升</p>
                     </div>
-                    <Star className="h-5 w-5 text-yellow-600 ml-auto" />
+                    <Icons.Star className="h-5 w-5 text-yellow-600 ml-auto" />
                   </div>
                 </div>
               </CardContent>
@@ -421,7 +401,7 @@ const OpenSourceProject: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <Icons.CheckCircle className="h-5 w-5 text-green-600" />
                   已确权贡献记录
                 </CardTitle>
               </CardHeader>
@@ -446,7 +426,7 @@ const OpenSourceProject: React.FC = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <Icons.CheckCircle className="h-4 w-4 text-green-600" />
                         <span className="text-xs text-green-600">已确权</span>
                       </div>
                     </div>
@@ -460,7 +440,7 @@ const OpenSourceProject: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-600" />
+                <Icons.Activity className="h-5 w-5 text-blue-600" />
                 FISCO BCOS网络状态
               </CardTitle>
             </CardHeader>
@@ -494,7 +474,7 @@ const OpenSourceProject: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-orange-600" />
+                    <Icons.Zap className="h-5 w-5 text-orange-600" />
                     实时贡献动态
                   </CardTitle>
                 </CardHeader>
@@ -512,13 +492,13 @@ const OpenSourceProject: React.FC = () => {
                             <span className="text-sm text-gray-600">{activity.action}</span>
                             {activity.is_on_chain && (
                               <Badge variant="default" className="text-xs bg-green-600">
-                                <CheckCircle className="h-3 w-3 mr-1" />
+                                <Icons.CheckCircle className="h-3 w-3 mr-1" />
                                 已上链
                               </Badge>
                             )}
                             {!activity.is_on_chain && activity.status === 'accepted' && (
                               <Badge variant="secondary" className="text-xs">
-                                <Clock className="h-3 w-3 mr-1" />
+                                <Icons.Clock className="h-3 w-3 mr-1" />
                                 待上链
                               </Badge>
                             )}
@@ -548,7 +528,7 @@ const OpenSourceProject: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-blue-600" />
+                    <Icons.Users className="h-5 w-5 text-blue-600" />
                     多方参与统计
                   </CardTitle>
                 </CardHeader>
@@ -557,7 +537,7 @@ const OpenSourceProject: React.FC = () => {
                     {/* 个人参与者 */}
                     <div className="border rounded-lg p-3 bg-blue-50">
                       <div className="flex items-center gap-2 mb-2">
-                        <User className="h-4 w-4 text-blue-600" />
+                        <Icons.User className="h-4 w-4 text-blue-600" />
                         <span className="font-medium text-sm">个人开发者</span>
                       </div>
                       <div className="text-2xl font-bold text-blue-600">
@@ -569,7 +549,7 @@ const OpenSourceProject: React.FC = () => {
                     {/* 企业参与者 */}
                     <div className="border rounded-lg p-3 bg-green-50">
                       <div className="flex items-center gap-2 mb-2">
-                        <Building className="h-4 w-4 text-green-600" />
+                        <Icons.Building className="h-4 w-4 text-green-600" />
                         <span className="font-medium text-sm">企业组织</span>
                       </div>
                       <div className="text-2xl font-bold text-green-600">
@@ -581,7 +561,7 @@ const OpenSourceProject: React.FC = () => {
                     {/* 总贡献统计 */}
                     <div className="border rounded-lg p-3 bg-purple-50">
                       <div className="flex items-center gap-2 mb-2">
-                        <Trophy className="h-4 w-4 text-purple-600" />
+                        <Icons.Trophy className="h-4 w-4 text-purple-600" />
                         <span className="font-medium text-sm">总贡献量</span>
                       </div>
                       <div className="text-2xl font-bold text-purple-600">
@@ -593,7 +573,7 @@ const OpenSourceProject: React.FC = () => {
                     {/* 链上确权率 */}
                     <div className="border rounded-lg p-3 bg-orange-50">
                       <div className="flex items-center gap-2 mb-2">
-                        <Shield className="h-4 w-4 text-orange-600" />
+                        <Icons.Shield className="h-4 w-4 text-orange-600" />
                         <span className="font-medium text-sm">链上确权率</span>
                       </div>
                       <div className="text-2xl font-bold text-orange-600">

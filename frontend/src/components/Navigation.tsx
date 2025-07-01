@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Globe, MessageCircle, Users, MessageSquare, User, FileText, ChevronDown } from 'lucide-react';
+import { Globe, MessageCircle, Users, MessageSquare, User, FileText, ChevronDown, LogIn, UserPlus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 const mainNavItems = [
@@ -21,6 +21,7 @@ const studyMenuItems = [
 
 const Navigation: React.FC<{ isMenuOpen: boolean; setIsMenuOpen: (isOpen: boolean) => void }> = ({ isMenuOpen, setIsMenuOpen }) => {
   const location = useLocation();
+  const isLoggedIn = Boolean(localStorage.getItem('token'));
   return (
     <nav className="hidden md:flex items-center space-x-2 px-6 h-16 bg-white border-b border-gray-200 shadow-sm">
       {/* 学习社区下拉菜单 */}
@@ -47,6 +48,23 @@ const Navigation: React.FC<{ isMenuOpen: boolean; setIsMenuOpen: (isOpen: boolea
           {item.label}
         </Link>
       ))}
+      {/* 注册/登录按钮 */}
+      {!isLoggedIn && (
+        <div className="flex items-center space-x-2 ml-4">
+          <Link
+            to="/register"
+            className={`flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors font-medium ${location.pathname === '/register' ? 'bg-green-50 text-green-600' : ''}`}
+          >
+            <UserPlus className="h-5 w-5 mr-1" />注册
+          </Link>
+          <Link
+            to="/login"
+            className={`flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium ${location.pathname === '/login' ? 'bg-blue-50 text-blue-600' : ''}`}
+          >
+            <LogIn className="h-5 w-5 mr-1" />登录
+          </Link>
+        </div>
+      )}
     </nav>
   );
 };

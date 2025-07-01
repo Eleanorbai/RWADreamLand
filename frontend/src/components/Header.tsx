@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
+import Navigation from './Navigation';
 
 const studyMenuItems = [
   { path: '/concepts', label: '基础知识' },
@@ -45,44 +46,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }: { isMenuOpen: bool
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex space-x-2">
-            {navItems.map((item, idx) =>
-              item.path === '/' ? (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium"
-                >
-                  {item.label}
-                </Link>
-              ) : null
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium">
-                  学习社区 <ChevronDown className="w-4 h-4 ml-1" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {studyMenuItems.map(item => (
-                  <DropdownMenuItem key={item.path} asChild>
-                    <Link to={item.path}>{item.label}</Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {navItems.map((item, idx) =>
-              item.path !== '/' ? (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium"
-                >
-                  {item.label}
-                </Link>
-              ) : null
-            )}
-          </nav>
+          <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
         </div>
       </div>
     </header>

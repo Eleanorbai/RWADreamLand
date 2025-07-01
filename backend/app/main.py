@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Body, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, status, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
-from typing import List, Optional, Dict
+from typing import List, Optional
 import os
 import json
 import logging
@@ -896,8 +896,8 @@ def reject_github_contribution(
         raise HTTPException(status_code=404, detail="贡献记录不存在或已处理")
     return contribution
 
-@app.get("/github-contributions", response_model=List[models.GitHubContributionPublic], tags=["GitHub贡献"])
-def list_github_contributions(
+@app.get("/admin/github-contributions", response_model=List[models.GitHubContributionPublic], tags=["GitHub贡献"])
+def list_github_contributions_admin(
     project_id: Optional[int] = None,
     status: Optional[models.ContributionStatus] = None,
     github_username: Optional[str] = None,
@@ -930,6 +930,7 @@ async def github_webhook(
     request: Request,
     db: Session = Depends(get_db)
 ):
+    print("收到 GitHub webhook 请求")
     from .github_service import github_service
     
     # 获取请求体
@@ -1126,29 +1127,3 @@ def read_user_contribution_stats(
             } for r in confirmed_records
         ]
     }
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
-manager = ConnectionManager()
-
-@app.websocket("/ws/notifications")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()  # 可用于心跳
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)

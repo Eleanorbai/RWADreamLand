@@ -21,6 +21,9 @@ import Settings from './pages/Settings';
 import Intelligence from './pages/Intelligence';
 import Origin from './pages/Origin';
 import Dock from './pages/Dock';
+import ContributionReview from './pages/ContributionReview';
+import OpenSourceProject from './pages/OpenSourceProject';
+import PermissionCenter from './pages/PermissionCenter';
 import { Toaster } from './components/ui/toaster';
 import './App.css';
 import { UserPlus, LogIn, User } from 'lucide-react';
@@ -68,6 +71,13 @@ function App() {
           
           {/* 个人设置路由 */}
           <Route path="/settings" element={<Settings />} />
+          
+          {/* 管理员路由 */}
+          <Route path="/admin" element={<PermissionCenter />} />
+          <Route path="/admin/contributions" element={<ContributionReview />} />
+          
+          {/* 开源项目路由 */}
+          <Route path="/projects/:id" element={<OpenSourceProject />} />
         </Routes>
       </main>
       

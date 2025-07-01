@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # 数据库配置
     database_url: str = os.getenv(
         "DATABASE_URL", 
-        "postgresql://postgres:123456@localhost:5432/postgres"
+        "sqlite:///./rwa_dream_land.db"  # 使用SQLite进行开发
     )
     
     # JWT配置
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     # GitHub集成配置
     github_enabled: bool = os.getenv("GITHUB_ENABLED", "False").lower() == "true"
     github_token: str = os.getenv("GITHUB_TOKEN", "")
-    github_webhook_secret: str = os.getenv("GITHUB_WEBHOOK_SECRET", "")
+    github_webhook_secret: str = os.getenv("GITHUB_WEBHOOK_SECRET", "rwa123456")  # 必须与GitHub Webhook配置一致
     github_default_repo: str = os.getenv("GITHUB_DEFAULT_REPO", "https://github.com/Eleanorbai/RWADreamLand.git")
     
     # GitHub贡献积分配置

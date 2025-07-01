@@ -775,3 +775,48 @@ class Notification(SQLModel, table=True):
     type: str = "contribution_review"
     is_read: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ProjectTag(SQLModel, table=True):
+    __tablename__ = "project_tags"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=50, unique=True)
+    projects: List["OpenProject"] = Relationship(back_populates="tags", link_model="ProjectTagLink")
+
+class ProjectTagLink(SQLModel, table=True):
+    __tablename__ = "project_tag_links"
+    project_id: int = Field(foreign_key="openproject.id", primary_key=True)
+    tag_id: int = Field(foreign_key="project_tags.id", primary_key=True)
+
+class OpenProject(SQLModel, table=True):
+    __tablename__ = "openproject"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=100)
+    description: Optional[str] = Field(default=None, max_length=500)
+    is_public: bool = Field(default=True)
+    creator_id: int = Field(foreign_key="users.id")
+    github_repo: Optional[str] = Field(default=None, max_length=300)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    # 关系
+    members: List["ProjectMember"] = Relationship(back_populates="project")
+    tags: List[ProjectTag] = Relationship(back_populates="projects", link_model=ProjectTagLink)
+
+class ProjectMember(SQLModel, table=True):
+    __tablename__ = "project_members"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="openproject.id")
+    user_id: int = Field(foreign_key="users.id")
+    role: str = Field(default="MEMBER", max_length=30)  # ADMIN/MEMBER/其它标签
+    status: str = Field(default="APPROVED", max_length=20)  # PENDING/APPROVED/REJECTED
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    # 关系
+    project: Optional[OpenProject] = Relationship(back_populates="members")
+
+class ProjectInvite(SQLModel, table=True):
+    __tablename__ = "project_invites"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="openproject.id")
+    inviter_id: int = Field(foreign_key="users.id")
+    invitee_id: int = Field(foreign_key="users.id")
+    status: str = Field(default="PENDING", max_length=20)  # PENDING/APPROVED/REJECTED
+    created_at: datetime = Field(default_factory=datetime.utcnow)

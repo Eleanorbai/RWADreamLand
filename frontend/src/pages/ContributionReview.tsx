@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { openSourceApi, userApi } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -68,18 +69,6 @@ const statusColors = {
   'rejected': 'bg-red-100 text-red-800'
 };
 
-function useContributionNotification(onNew: () => void) {
-  useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws/notifications");
-    ws.onmessage = (event) => {
-      if (event.data === "new_contribution") {
-        onNew();
-      }
-    };
-    return () => ws.close();
-  }, [onNew]);
-}
-
 export default function ContributionReview() {
   const [contributions, setContributions] = useState<GitHubContribution[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -95,54 +84,12 @@ export default function ContributionReview() {
     loadUsers();
   }, []);
 
-  useContributionNotification(() => {
-    toast({ title: "有新的贡献待审核", description: "请及时处理。" });
-    loadContributions(); // 触发刷新
-  });
-
   const loadContributions = async () => {
     try {
       setLoading(true);
-      // 模拟API调用 - 实际应该调用后端API
-      const mockContributions: GitHubContribution[] = [
-        {
-          id: 1,
-          github_username: 'developer001',
-          issue_number: 123,
-          issue_title: '修复用户登录时的认证错误',
-          issue_url: 'https://github.com/Eleanorbai/RWADreamLand/issues/123',
-          contribution_type: 'bug_report',
-          contribution_points: 50,
-          status: 'pending',
-          github_created_at: '2025-06-30T10:30:00Z',
-        },
-        {
-          id: 2,
-          github_username: 'techcorp',
-          issue_number: 124,
-          issue_title: '增加企业用户批量导入功能',
-          issue_url: 'https://github.com/Eleanorbai/RWADreamLand/issues/124',
-          contribution_type: 'feature_request',
-          contribution_points: 80,
-          status: 'pending',
-          github_created_at: '2025-06-30T09:15:00Z',
-        },
-        {
-          id: 3,
-          github_username: 'uxdesigner',
-          issue_number: 122,
-          issue_title: '优化移动端界面响应式设计',
-          issue_url: 'https://github.com/Eleanorbai/RWADreamLand/issues/122',
-          contribution_type: 'ui_ux_improvement',
-          contribution_points: 60,
-          status: 'accepted',
-          github_created_at: '2025-06-30T08:00:00Z',
-          accepted_at: '2025-06-30T11:00:00Z',
-          blockchain_hash: '0x1234567890abcdef1234567890abcdef12345678',
-          user_id: 3
-        }
-      ];
-      setContributions(mockContributions);
+      // 调用真实的API获取贡献记录
+      const contributionsData = await openSourceApi.getContributions();
+      setContributions(contributionsData);
     } catch (error) {
       console.error('Failed to load contributions:', error);
       toast({
@@ -157,13 +104,9 @@ export default function ContributionReview() {
 
   const loadUsers = async () => {
     try {
-      // 模拟API调用 - 实际应该调用后端API
-      const mockUsers: User[] = [
-        { id: 1, username: 'user001', github_username: 'developer001', avatar: 'https://github.com/developer001.png' },
-        { id: 2, username: 'corp_tech', github_username: 'techcorp', avatar: 'https://github.com/techcorp.png' },
-        { id: 3, username: 'designer', github_username: 'uxdesigner', avatar: 'https://github.com/uxdesigner.png' }
-      ];
-      setUsers(mockUsers);
+      // 调用真实的API获取用户列表
+      const usersData = await userApi.getAllUsers();
+      setUsers(usersData);
     } catch (error) {
       console.error('Failed to load users:', error);
     }
@@ -173,19 +116,11 @@ export default function ContributionReview() {
     setProcessing(prev => new Set(prev).add(contributionId));
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 调用真实的API接受贡献
+      const updatedContribution = await openSourceApi.acceptContribution(contributionId, userId);
       
       setContributions(prev => prev.map(c => 
-        c.id === contributionId 
-          ? { 
-              ...c, 
-              status: 'accepted',
-              accepted_at: new Date().toISOString(),
-              blockchain_hash: `0x${Math.random().toString(16).substr(2, 40)}`,
-              user_id: userId
-            }
-          : c
+        c.id === contributionId ? updatedContribution : c
       ));
       
       toast({
@@ -194,6 +129,7 @@ export default function ContributionReview() {
         duration: 3000,
       });
     } catch (error) {
+      console.error('Failed to accept contribution:', error);
       toast({
         title: "操作失败",
         description: "接受贡献时发生错误，请稍后重试",
@@ -212,13 +148,11 @@ export default function ContributionReview() {
     setProcessing(prev => new Set(prev).add(contributionId));
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 调用真实的API拒绝贡献
+      const updatedContribution = await openSourceApi.rejectContribution(contributionId);
       
       setContributions(prev => prev.map(c => 
-        c.id === contributionId 
-          ? { ...c, status: 'rejected' }
-          : c
+        c.id === contributionId ? updatedContribution : c
       ));
       
       toast({
@@ -227,6 +161,7 @@ export default function ContributionReview() {
         duration: 3000,
       });
     } catch (error) {
+      console.error('Failed to reject contribution:', error);
       toast({
         title: "操作失败",
         description: "拒绝贡献时发生错误，请稍后重试",

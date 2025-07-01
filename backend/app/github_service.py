@@ -13,6 +13,7 @@ from .config import settings
 from . import models, crud
 from .database import get_db
 from sqlmodel import Session
+from .notification import notify_reviewers_new_contribution
 
 logger = logging.getLogger(__name__)
 
@@ -108,8 +109,13 @@ class GitHubService:
                 status=models.ContributionStatus.PENDING,
                 github_created_at=datetime.fromisoformat(issue.get("created_at", "").replace("Z", "+00:00"))
             )
-            
-            return crud.create_github_contribution(db, contribution_data)
+            new_contribution = crud.create_github_contribution(db, contribution_data)
+            # 新增：推送审核通知
+            try:
+                notify_reviewers_new_contribution(db, issue.get("title", ""), new_contribution.id)
+            except Exception as e:
+                logger.error(f"推送GitHub贡献审核通知失败: {e}")
+            return new_contribution
         
         return None
     

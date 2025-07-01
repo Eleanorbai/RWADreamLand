@@ -21,6 +21,7 @@ def create_site_notification(db: Session, user_id: int, title: str, content: str
 def notify_reviewers_new_contribution(db: Session, contribution_title: str, contribution_id: int):
     reviewers = db.query(User).filter(User.role.in_([UserRole.REVIEWER, UserRole.COMMUNITY_MANAGER, UserRole.ADMIN])).all()
     for reviewer in reviewers:
+        print(f"===> 正在写入审核通知 user_id={reviewer.id} title={contribution_title}")
         create_site_notification(
             db,
             user_id=reviewer.id,
