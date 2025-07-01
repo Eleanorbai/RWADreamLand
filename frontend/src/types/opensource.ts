@@ -196,3 +196,54 @@ export const contributionPointsConfig: Record<ContributionType, number> = {
   [ContributionType.TESTING]: 15,
   [ContributionType.OTHER]: 5
 };
+
+// 项目成员类型
+export interface ProjectMember {
+  id: number;
+  project_id: number;
+  user_id: number;
+  role: 'ADMIN' | 'MEMBER';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  user?: {
+    id: number;
+    username: string;
+    full_name?: string;
+    avatar_url?: string;
+    points?: number;
+  };
+  joined_at?: string;
+}
+
+// 项目邀请类型
+export interface ProjectInvite {
+  id: number;
+  project_id: number;
+  inviter_id: number;
+  invitee_id: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  created_at: string;
+  inviter?: {
+    id: number;
+    username: string;
+    full_name?: string;
+    avatar_url?: string;
+  };
+  invitee?: {
+    id: number;
+    username: string;
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
+
+// 项目标签类型
+export interface ProjectTag {
+  id: number;
+  name: string;
+}
+
+// 项目-标签多对多关联
+export interface ProjectTagLink {
+  project_id: number;
+  tag_id: number;
+}
