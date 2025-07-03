@@ -40,6 +40,15 @@ export interface OpenProject {
   is_public: boolean;
   created_at: string;
   updated_at?: string;
+  progress?: number;
+  totalValue?: number;
+  raised?: number;
+  investors?: number;
+  teamSize?: number;
+  daysLeft?: number;
+  asset_owner?: string;
+  leader_id?: number;
+  leader_role?: string;
 }
 
 export interface OpenProjectCreate {
@@ -47,6 +56,15 @@ export interface OpenProjectCreate {
   github_repo: string;
   description?: string;
   contract_address?: string;
+  progress?: number;
+  totalValue?: number;
+  raised?: number;
+  investors?: number;
+  teamSize?: number;
+  daysLeft?: number;
+  asset_owner?: string;
+  leader_id?: number;
+  leader_role?: string;
 }
 
 export interface OpenProjectUpdate {
@@ -54,6 +72,15 @@ export interface OpenProjectUpdate {
   description?: string;
   contract_address?: string;
   is_public?: boolean;
+  progress?: number;
+  totalValue?: number;
+  raised?: number;
+  investors?: number;
+  teamSize?: number;
+  daysLeft?: number;
+  asset_owner?: string;
+  leader_id?: number;
+  leader_role?: string;
 }
 
 // GitHub贡献记录类型

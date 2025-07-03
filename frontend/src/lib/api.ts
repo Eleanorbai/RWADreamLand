@@ -493,7 +493,7 @@ export const openSourceApi = {
     if (userId) params.append('user_id', userId.toString());
     if (status) params.append('status', status);
     
-    const response = await api.get(`/api/admin/github-contributions?${params}`);
+    const response = await api.get(`/api/github-contributions?${params}`);
     return response.data;
   },
 

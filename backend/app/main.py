@@ -14,6 +14,8 @@ from . import crud, models
 from .utils import verify_password, get_password_hash
 from pydantic import BaseModel
 from .notification import create_site_notification, notify_project_invite, notify_project_invite_approved, notify_project_invite_rejected
+from .models import User, ProjectLeader, ProjectMember, OpenProject, OpenProjectCreate, OpenProjectPublic
+from app.routers import project, contribution
 
 logger = logging.getLogger(__name__)
 
@@ -777,12 +779,45 @@ def change_password(
 # RWA星球共创项目相关路由
 
 # 开源项目管理路由
-@app.post("/api/open-projects", response_model=models.OpenProject, tags=["开源项目"])
+@app.post("/api/open-projects", response_model=OpenProjectPublic, tags=["开源项目"])
 def create_open_project(
-    project: models.OpenProjectCreate,
-    db: Session = Depends(get_db)
+    project: OpenProjectCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    return crud.create_open_project(db=db, project=project)
+    db_project = OpenProject(
+        name=project.name,
+        description=project.description,
+        is_public=project.is_public,
+        github_repo=project.github_repo,
+        creator_id=current_user.id,
+        progress=project.progress,
+        total_value=project.total_value,
+        raised=project.raised,
+        investors=project.investors,
+        team_size=project.team_size,
+        days_left=project.days_left,
+        asset_owner=project.asset_owner,
+        leader_id=current_user.id,
+        leader_role="项目管理员",
+        stage=project.stage,
+        is_recruiting=project.is_recruiting,
+        open_positions=project.open_positions,
+    )
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    # 自动插入管理员成员
+    db_member = ProjectMember(
+        project_id=db_project.id,
+        user_id=current_user.id,
+        role="ADMIN",
+        status="APPROVED"
+    )
+    db.add(db_member)
+    db.commit()
+    # 返回项目详情
+    return db_project
 
 @app.get("/api/open-projects", response_model=List[models.OpenProjectPublic], tags=["开源项目"])
 def read_open_projects(
@@ -791,7 +826,25 @@ def read_open_projects(
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
-    return crud.get_open_projects(db, skip=skip, limit=limit, is_active=is_active)
+    projects = crud.get_open_projects(db, skip=skip, limit=limit, is_active=is_active)
+    result = []
+    for p in projects:
+        leader_obj = None
+        if p.leader_id:
+            leader = db.get(User, p.leader_id)
+            if leader:
+                leader_obj = ProjectLeader(
+                    name=leader.full_name or leader.username,
+                    avatar=leader.avatar_url or "",
+                    title=p.leader_role or ""
+                )
+        result.append({
+            **p.dict(),
+            "leader": leader_obj,
+            "isRecruiting": p.is_recruiting if p.is_recruiting is not None else False,
+            "openPositions": p.open_positions if p.open_positions else []
+        })
+    return result
 
 @app.get("/api/open-projects/{project_id}", response_model=models.OpenProjectPublic, tags=["开源项目"])
 def read_open_project(
@@ -834,8 +887,19 @@ def read_github_contributions(
     status: Optional[models.ContributionStatus] = None,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user)
 ):
+    # 权限校验：平台admin、社区管理员、或该项目的admin都能访问
+    if project_id is not None:
+        is_platform_admin = getattr(current_user, "role", None) in [models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER]
+        is_project_admin = False
+        if not is_platform_admin:
+            member = db.query(models.ProjectMember).filter_by(project_id=project_id, user_id=current_user.id, role="ADMIN", status="APPROVED").first()
+            if member:
+                is_project_admin = True
+        if not (is_platform_admin or is_project_admin):
+            raise HTTPException(status_code=403, detail="无权限查看该项目贡献")
     return crud.get_github_contributions(
         db, project_id=project_id, user_id=user_id, status=status, skip=skip, limit=limit
     )
@@ -1002,11 +1066,43 @@ def update_my_contributor_profile(
     return profile
 
 @app.get("/api/contributors/rankings", response_model=List[models.ContributorRanking], tags=["贡献者"])
-def read_contributor_rankings(
-    limit: int = 50,
+def get_contributor_rankings(
     db: Session = Depends(get_db)
 ):
-    return crud.get_contributor_rankings(db, limit=limit)
+    from app.models import GitHubContribution, User
+    from sqlalchemy import func
+    results = (
+        db.query(
+            GitHubContribution.user_id,
+            func.max(GitHubContribution.github_username).label("github_username"),
+            func.count(GitHubContribution.id).label("total_contributions"),
+            func.sum(GitHubContribution.contribution_points).label("total_points"),
+            User.username,
+            User.avatar_url
+        )
+        .join(User, User.id == GitHubContribution.user_id)
+        .filter(
+            GitHubContribution.status == "ACCEPTED",
+            GitHubContribution.user_id.isnot(None)
+        )
+        .group_by(GitHubContribution.user_id, User.username, User.avatar_url)
+        .order_by(func.sum(GitHubContribution.contribution_points).desc())
+        .limit(30)
+        .all()
+    )
+    rankings = []
+    for idx, r in enumerate(results, 1):
+        rankings.append({
+            "user_id": r.user_id,
+            "github_username": r.github_username,
+            "username": r.username,
+            "avatar_url": r.avatar_url,
+            "total_contributions": r.total_contributions,
+            "total_points": r.total_points,
+            "reputation_score": 0,  # 如无实际算法可先填0
+            "rank": idx
+        })
+    return rankings
 
 @app.get("/api/contributors/{user_id}/contributions", response_model=List[models.GitHubContributionPublic], tags=["贡献者"])
 def read_user_contributions(
@@ -1147,32 +1243,47 @@ def list_project_members(
             raise HTTPException(403, "无权查看私有项目成员")
     return crud.list_members(db, project_id)
 
-@app.post("/api/open-projects/{project_id}/members", tags=["项目成员"])
-def apply_project_member(
-    project_id: int,
-    current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    # 检查是否已是成员
-    member = crud.get_member(db, project_id, current_user.id)
+@app.post("/api/open-projects/{project_id}/members")
+def apply_join_project(project_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_active_user)):
+    member = db.query(ProjectMember).filter_by(project_id=project_id, user_id=user.id).first()
     if member:
-        raise HTTPException(400, "你已是该项目成员")
-    # 创建申请，状态为PENDING，管理员审核
-    new_member = crud.add_member(db, project_id, current_user.id, role="MEMBER", status="PENDING")
-    return new_member
+        if member.status == "APPROVED":
+            raise HTTPException(400, "已是成员")
+        elif member.status == "PENDING":
+            raise HTTPException(400, "已申请，待审批")
+    new_member = ProjectMember(
+        project_id=project_id,
+        user_id=user.id,
+        role="MEMBER",
+        status="PENDING"
+    )
+    db.add(new_member)
+    db.commit()
+    return {"msg": "申请成功，待审批"}
 
-@app.delete("/api/open-projects/{project_id}/members/{member_id}", tags=["项目成员"])
-def remove_project_member(
-    project_id: int,
-    member_id: int,
-    current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    # 仅管理员可删
-    member = crud.get_member(db, project_id, current_user.id)
-    if not member or member.role != "ADMIN":
-        raise HTTPException(403, "仅项目管理员可移除成员")
-    return {"success": crud.remove_member(db, member_id)}
+@app.post("/api/open-projects/{project_id}/members/{member_id}/approve")
+def approve_member(project_id: int, member_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_active_user)):
+    admin = db.query(ProjectMember).filter_by(project_id=project_id, user_id=user.id, role="ADMIN", status="APPROVED").first()
+    if not admin:
+        raise HTTPException(403, "无权限")
+    member = db.query(ProjectMember).filter_by(id=member_id, project_id=project_id).first()
+    if not member:
+        raise HTTPException(404, "成员不存在")
+    member.status = "APPROVED"
+    db.commit()
+    return {"msg": "审批通过"}
+
+@app.post("/api/open-projects/{project_id}/members/{member_id}/reject")
+def reject_member(project_id: int, member_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_active_user)):
+    admin = db.query(ProjectMember).filter_by(project_id=project_id, user_id=user.id, role="ADMIN", status="APPROVED").first()
+    if not admin:
+        raise HTTPException(403, "无权限")
+    member = db.query(ProjectMember).filter_by(id=member_id, project_id=project_id).first()
+    if not member:
+        raise HTTPException(404, "成员不存在")
+    member.status = "REJECTED"
+    db.commit()
+    return {"msg": "已拒绝"}
 
 # ========== 项目邀请管理 ==========
 

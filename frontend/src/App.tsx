@@ -28,6 +28,8 @@ import { Toaster } from './components/ui/toaster';
 import './App.css';
 import { UserPlus, LogIn, User } from 'lucide-react';
 import { UserProvider } from "@/context/UserContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

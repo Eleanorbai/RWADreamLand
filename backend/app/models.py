@@ -2,6 +2,9 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from sqlalchemy import Column
+from sqlmodel import JSON
+from pydantic import BaseModel
 
 class UserRole(str, Enum):
     USER = "user"
@@ -800,6 +803,19 @@ class OpenProject(SQLModel, table=True):
     github_repo: Optional[str] = Field(default=None, max_length=300)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    # RWA项目扩展字段
+    progress: Optional[int] = Field(default=0, description="项目进度百分比")
+    total_value: Optional[int] = Field(default=0, description="目标金额")
+    raised: Optional[int] = Field(default=0, description="已融资金额")
+    investors: Optional[int] = Field(default=0, description="投资人数量")
+    team_size: Optional[int] = Field(default=0, description="团队规模")
+    days_left: Optional[int] = Field(default=0, description="剩余天数")
+    asset_owner: Optional[str] = Field(default=None, max_length=100, description="资产方名称")
+    leader_id: Optional[int] = Field(default=None, foreign_key="users.id", description="项目负责人用户ID")
+    leader_role: Optional[str] = Field(default="项目负责人", max_length=50, description="负责人角色")
+    stage: Optional[str] = Field(default="idea", max_length=30, description="项目阶段")
+    is_recruiting: Optional[bool] = Field(default=False, description="是否招募中")
+    open_positions: Optional[list] = Field(default=None, sa_column=Column(JSON), description="正在招募的岗位信息")
     # 关系
     members: List["ProjectMember"] = Relationship(back_populates="project")
     tags: List["ProjectTag"] = Relationship(back_populates="projects", link_model=ProjectTagLink)
@@ -839,15 +855,63 @@ class OpenProjectCreate(OpenProjectBase):
     description: Optional[str] = None
     github_repo: Optional[str] = None
     creator_id: int
+    # 新增字段
+    progress: Optional[int] = 0
+    total_value: Optional[int] = 0
+    raised: Optional[int] = 0
+    investors: Optional[int] = 0
+    team_size: Optional[int] = 0
+    days_left: Optional[int] = 0
+    asset_owner: Optional[str] = None
+    leader_id: Optional[int] = None
+    leader_role: Optional[str] = "项目负责人"
+    stage: Optional[str] = "idea"
+    is_recruiting: Optional[bool] = False
+    open_positions: Optional[list] = None
 
 class OpenProjectUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
     is_public: Optional[bool] = None
     github_repo: Optional[str] = None
+    # 新增字段
+    progress: Optional[int] = None
+    total_value: Optional[int] = None
+    raised: Optional[int] = None
+    investors: Optional[int] = None
+    team_size: Optional[int] = None
+    days_left: Optional[int] = None
+    asset_owner: Optional[str] = None
+    leader_id: Optional[int] = None
+    leader_role: Optional[str] = None
+    stage: Optional[str] = None
+    is_recruiting: Optional[bool] = None
+    open_positions: Optional[list] = None
+
+class ProjectLeader(BaseModel):
+    name: str
+    avatar: str = ""
+    title: str = ""
 
 class OpenProjectPublic(OpenProjectBase):
     id: int
     creator_id: int
     created_at: datetime
     updated_at: datetime
+    # 新增字段
+    progress: Optional[int] = 0
+    total_value: Optional[int] = 0
+    raised: Optional[int] = 0
+    investors: Optional[int] = 0
+    team_size: Optional[int] = 0
+    days_left: Optional[int] = 0
+    asset_owner: Optional[str] = None
+    leader_id: Optional[int] = None
+    leader_role: Optional[str] = "项目负责人"
+    stage: Optional[str] = "idea"
+    is_recruiting: Optional[bool] = False
+    open_positions: Optional[list] = None
+    # 新增：前端卡片展示用
+    leader: Optional[ProjectLeader] = None
+    isRecruiting: bool = False
+    openPositions: list = []

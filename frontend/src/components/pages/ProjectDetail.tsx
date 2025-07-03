@@ -8,6 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
+// RWA阶段常量
+const RWAProjectStages = [
+  { value: 'idea', label: '立项/创意' },
+  { value: 'due_diligence', label: '尽调' },
+  { value: 'structuring', label: '结构设计' },
+  { value: 'legal_compliance', label: '合规/法律' },
+  { value: 'tokenization', label: '资产上链/代币化' },
+  { value: 'fundraising', label: '融资/发行' },
+  { value: 'operation', label: '运营管理' },
+  { value: 'exit', label: '退出/清算' }
+];
+
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const { project, loading, error, setProject } = useProjectDetail(Number(projectId));
@@ -59,6 +71,89 @@ export default function ProjectDetail() {
               <Input value={form.github_repo || ''} onChange={e => setForm(f => ({ ...f, github_repo: e.target.value }))} />
             ) : (
               <div>{project.github_repo}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">项目进度(%)</label>
+            {editMode ? (
+              <Input type="number" value={form.progress ?? ''} onChange={e => setForm(f => ({ ...f, progress: Number(e.target.value) }))} />
+            ) : (
+              <div>{project.progress ?? 0}%</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">目标金额</label>
+            {editMode ? (
+              <Input type="number" value={form.totalValue ?? ''} onChange={e => setForm(f => ({ ...f, totalValue: Number(e.target.value) }))} />
+            ) : (
+              <div>{project.totalValue ?? 0}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">已融资金额</label>
+            {editMode ? (
+              <Input type="number" value={form.raised ?? ''} onChange={e => setForm(f => ({ ...f, raised: Number(e.target.value) }))} />
+            ) : (
+              <div>{project.raised ?? 0}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">投资人数量</label>
+            {editMode ? (
+              <Input type="number" value={form.investors ?? ''} onChange={e => setForm(f => ({ ...f, investors: Number(e.target.value) }))} />
+            ) : (
+              <div>{project.investors ?? 0}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">团队规模</label>
+            {editMode ? (
+              <Input type="number" value={form.teamSize ?? ''} onChange={e => setForm(f => ({ ...f, teamSize: Number(e.target.value) }))} />
+            ) : (
+              <div>{project.teamSize ?? 0}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">剩余天数</label>
+            {editMode ? (
+              <Input type="number" value={form.daysLeft ?? ''} onChange={e => setForm(f => ({ ...f, daysLeft: Number(e.target.value) }))} />
+            ) : (
+              <div>{project.daysLeft ?? 0}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">资产方</label>
+            {editMode ? (
+              <Input value={form.asset_owner ?? ''} onChange={e => setForm(f => ({ ...f, asset_owner: e.target.value }))} />
+            ) : (
+              <div>{project.asset_owner || '-'}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">负责人角色</label>
+            {editMode ? (
+              <Input value={form.leader_role ?? ''} onChange={e => setForm(f => ({ ...f, leader_role: e.target.value }))} />
+            ) : (
+              <div>{project.leader_role || '-'}</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">项目阶段</label>
+            {editMode ? (
+              <select
+                className="border rounded px-2 py-1 w-full"
+                value={form.stage || ''}
+                onChange={e => setForm(f => ({ ...f, stage: e.target.value }))}
+              >
+                <option value="">请选择阶段</option>
+                {RWAProjectStages.map(stage => (
+                  <option key={stage.value} value={stage.value}>{stage.label}</option>
+                ))}
+              </select>
+            ) : (
+              <div>
+                {RWAProjectStages.find(s => s.value === project.stage)?.label || project.stage || '-'}
+              </div>
             )}
           </div>
           {editMode ? (

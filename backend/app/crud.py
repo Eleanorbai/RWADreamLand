@@ -697,6 +697,15 @@ def create_open_project(db: Session, project: "OpenProjectCreate") -> "OpenProje
         is_public=project.is_public,
         creator_id=project.creator_id,
         github_repo=project.github_repo,
+        progress=project.progress,
+        total_value=project.total_value,
+        raised=project.raised,
+        investors=project.investors,
+        team_size=project.team_size,
+        days_left=project.days_left,
+        asset_owner=project.asset_owner,
+        leader_id=project.leader_id,
+        leader_role=project.leader_role,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )

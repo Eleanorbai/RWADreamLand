@@ -86,6 +86,28 @@ const ProjectType = {
   OTHER: 'other'
 } as const;
 
+// RWA全流程阶段标签与颜色
+const RWA_STAGE_LABELS: Record<string, string> = {
+  idea: '立项/创意',
+  due_diligence: '尽调',
+  structuring: '结构设计',
+  legal_compliance: '合规/法律',
+  tokenization: '资产上链/代币化',
+  fundraising: '融资/发行',
+  operation: '运营管理',
+  exit: '退出/清算',
+};
+const RWA_STAGE_COLORS: Record<string, string> = {
+  idea: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  due_diligence: 'bg-blue-100 text-blue-800 border-blue-300',
+  structuring: 'bg-purple-100 text-purple-800 border-purple-300',
+  legal_compliance: 'bg-green-100 text-green-800 border-green-300',
+  tokenization: 'bg-pink-100 text-pink-800 border-pink-300',
+  fundraising: 'bg-orange-100 text-orange-800 border-orange-300',
+  operation: 'bg-gray-100 text-gray-800 border-gray-300',
+  exit: 'bg-red-100 text-red-800 border-red-300',
+};
+
 // 定义卡片展示用类型
 interface OpenProjectCard {
   id: number;
@@ -273,27 +295,11 @@ export default function Origin() {
   };
 
   const getStageLabel = (stage: string) => {
-    const labels = {
-      [ProjectStage.IDEA]: '创意阶段',
-      [ProjectStage.PLANNING]: '规划阶段',
-      [ProjectStage.DEVELOPMENT]: '开发阶段',
-      [ProjectStage.TESTING]: '测试阶段',
-      [ProjectStage.LAUNCH]: '启动阶段',
-      [ProjectStage.SCALING]: '扩展阶段'
-    };
-    return labels[stage as keyof typeof labels] || stage;
+    return RWA_STAGE_LABELS[stage] || stage;
   };
 
   const getStageColor = (stage: string) => {
-    const colors = {
-      [ProjectStage.IDEA]: 'bg-yellow-100 text-yellow-800',
-      [ProjectStage.PLANNING]: 'bg-blue-100 text-blue-800',
-      [ProjectStage.DEVELOPMENT]: 'bg-purple-100 text-purple-800',
-      [ProjectStage.TESTING]: 'bg-orange-100 text-orange-800',
-      [ProjectStage.LAUNCH]: 'bg-green-100 text-green-800',
-      [ProjectStage.SCALING]: 'bg-red-100 text-red-800'
-    };
-    return colors[stage as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return RWA_STAGE_COLORS[stage] || 'bg-gray-100 text-gray-800 border-gray-300';
   };
 
   const getTypeLabel = (type: string) => {
