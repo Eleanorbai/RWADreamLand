@@ -100,16 +100,26 @@ const statusColor = {
   REJECTED: "bg-red-100 text-red-800",
 };
 
-const ProjectReviewTab = ({ projectId }) => {
+const ProjectReviewTab = ({ projectId, onReviewChange }) => {
+  console.log('ProjectReviewTab mounted', projectId); // 调试用
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchContributions = () => {
-    setLoading(true);
-    api.get(`/api/open-projects/${projectId}/contributions`).then(res => setContributions(res.data)).finally(() => setLoading(false));
+    console.log('fetchContributions called', projectId);
+    openSourceApi.getContributions(projectId, undefined, "PENDING")
+      .then(data => {
+        console.log('openSourceApi.getContributions then', data);
+        data.forEach((c, i) => console.log(`contribution[${i}] status:`, c.status));
+        setContributions(data);
+      })
+      .catch(err => {
+        console.error('openSourceApi.getContributions error', err);
+      });
   };
 
   useEffect(() => {
+    console.log('useEffect triggered', projectId); // 调试用
     fetchContributions();
   }, [projectId]);
 
@@ -117,12 +127,14 @@ const ProjectReviewTab = ({ projectId }) => {
     api.put(`/api/github-contributions/${id}/accept`).then(() => {
       toast.success("已通过");
       fetchContributions();
+      onReviewChange && onReviewChange();
     });
   };
   const handleReject = (id) => {
     api.put(`/api/github-contributions/${id}/reject`).then(() => {
       toast.info("已拒绝");
       fetchContributions();
+      onReviewChange && onReviewChange();
     });
   };
 
@@ -157,12 +169,12 @@ const ProjectReviewTab = ({ projectId }) => {
                   <td className="px-4 py-2">{c.contribution_type}</td>
                   <td className="px-4 py-2">{c.contribution_points}</td>
                   <td className="px-4 py-2">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColor[c.status] || "bg-gray-100 text-gray-800"}`}>
-                      {c.status === "PENDING" ? "待审核" : c.status === "ACCEPTED" ? "已通过" : "已拒绝"}
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColor[c.status.toUpperCase()] || "bg-gray-100 text-gray-800"}`}>
+                      {c.status.toLowerCase() === "pending" ? "待审核" : c.status.toLowerCase() === "accepted" ? "已通过" : "已拒绝"}
                     </span>
                   </td>
                   <td className="px-4 py-2">
-                    {c.status === "PENDING" && (
+                    {c.status && c.status.toLowerCase() === "pending" && (
                       <div className="flex gap-2">
                         <button className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition" onClick={() => handleApprove(c.id)}>通过</button>
                         <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition" onClick={() => handleReject(c.id)}>拒绝</button>
@@ -201,6 +213,7 @@ const OpenSourceProject: React.FC = () => {
   const { user } = useUser();
   const [memberInfo, setMemberInfo] = useState<any>(null);
   const [memberLoading, setMemberLoading] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (projectId) {
@@ -220,6 +233,8 @@ const OpenSourceProject: React.FC = () => {
 
   const isProjectAdmin = memberInfo?.role === "ADMIN" && memberInfo?.status === "APPROVED";
   const isPlatformAdmin = user?.role === "admin" || user?.role === "community_manager";
+
+  console.log('isProjectAdmin', isProjectAdmin, 'isPlatformAdmin', isPlatformAdmin, 'memberInfo', memberInfo, 'user', user);
 
   const loadProjectData = async (id: number) => {
     try {
@@ -304,6 +319,26 @@ const OpenSourceProject: React.FC = () => {
 
   // 渲染前容错
   const safeContributions = Array.isArray(contributions) ? contributions : [];
+
+  const fetchPendingCount = async () => {
+    if (!projectId) return;
+    try {
+      const res = await api.get(`/api/open-projects/${projectId}/contributions/pending-count`);
+      setPendingCount(res.data.count);
+    } catch (e) {
+      setPendingCount(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingCount();
+  }, [projectId]);
+
+  useEffect(() => {
+    if (activeTab === "review") {
+      fetchPendingCount();
+    }
+  }, [activeTab]);
 
   if (loading || memberLoading) {
     return <div className="text-center py-16">加载中...</div>;
@@ -482,6 +517,11 @@ const OpenSourceProject: React.FC = () => {
                 onClick={() => setActiveTab(tab.value)}
               >
                 {tab.label}
+                {tab.value === "review" && pendingCount > 0 && (
+                  <span className="ml-1 inline-block min-w-[18px] h-5 px-1 bg-red-500 text-white text-xs rounded-full text-center align-middle">
+                    {pendingCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -493,7 +533,11 @@ const OpenSourceProject: React.FC = () => {
         <TabsContent value="contributors"><ProjectContributors projectId={project.id} /></TabsContent>
         <TabsContent value="analytics"><ProjectAnalytics projectId={project.id} /></TabsContent>
         {(isProjectAdmin || isPlatformAdmin) && <TabsContent value="members"><ProjectMembersTab projectId={project.id} /></TabsContent>}
-        {(isProjectAdmin || isPlatformAdmin) && <TabsContent value="review"><ProjectReviewTab projectId={project.id} /></TabsContent>}
+        {(isProjectAdmin || isPlatformAdmin) && 
+          <TabsContent value="review">
+            <ProjectReviewTab projectId={project.id} onReviewChange={fetchPendingCount} />
+          </TabsContent>
+        }
         {(isProjectAdmin || isPlatformAdmin) && <TabsContent value="team"><ProjectTeamTab projectId={project.id} /></TabsContent>}
       </Tabs>
     </div>

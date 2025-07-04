@@ -47,6 +47,10 @@ app.add_middleware(
 # 包含认证路由
 app.include_router(auth_router, prefix="/api", tags=["认证"])
 
+# 注册路由
+app.include_router(project.router, prefix="/api")
+app.include_router(contribution.router, prefix="/api")
+
 # 笔记相关路由
 @app.post("/api/notes", response_model=models.NotePublic, tags=["笔记"])
 def create_note(
@@ -1092,11 +1096,12 @@ def get_contributor_rankings(
     )
     rankings = []
     for idx, r in enumerate(results, 1):
+        avatar_url = r.avatar_url or f"https://api.dicebear.com/6.x/initials/svg?seed={r.github_username or r.username or r.user_id}&backgroundType=gradientLinear"
         rankings.append({
             "user_id": r.user_id,
             "github_username": r.github_username,
             "username": r.username,
-            "avatar_url": r.avatar_url,
+            "avatar_url": avatar_url,
             "total_contributions": r.total_contributions,
             "total_points": r.total_points,
             "reputation_score": 0,  # 如无实际算法可先填0
