@@ -29,7 +29,24 @@ fi
 cd "$(dirname "$0")"
 
 # 启动后端
-echo -e "${BLUE}启动后端服务...${NC}"
+# 自动检测并设置JAVA_HOME
+JAVA_HOME_CANDIDATES=(
+    "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+    "/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+    "/Library/Java/JavaVirtualMachines/openjdk-17.jdk/Contents/Home"
+)
+for JAVA_HOME_PATH in "${JAVA_HOME_CANDIDATES[@]}"; do
+    if [ -d "$JAVA_HOME_PATH" ]; then
+        export JAVA_HOME="$JAVA_HOME_PATH"
+        export PATH="$JAVA_HOME/bin:$PATH"
+        echo -e "${GREEN}已设置JAVA_HOME: $JAVA_HOME${NC}"
+        break
+    fi
+done
+if [ -z "$JAVA_HOME" ]; then
+    echo -e "${YELLOW}未自动检测到Java安装目录，请确保Java已安装且JAVA_HOME已配置。${NC}"
+fi
+
 cd backend
 
 # 安装 Python 依赖

@@ -15,7 +15,7 @@ const navItems = [
   { path: '/', label: '首页' },
   { path: '/square', label: '灵感广场' },
   { path: '/intelligence', label: '情报港' },
-  { path: '/origin', label: '原点馆' },
+  { path: '/origin', label: '孵化舱' },
   { path: '/dock', label: 'Dock讨论区' },
   { path: '/me', label: '用户中心' },
   { path: '/about', label: '关于我们' },

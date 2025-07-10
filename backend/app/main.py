@@ -1,3 +1,10 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    filename='logs/app.log',
+    filemode='a',
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
 from fastapi import FastAPI, Depends, HTTPException, status, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -6,6 +13,7 @@ from typing import List, Optional
 import os
 import json
 import logging
+from datetime import datetime
 
 from .auth import router as auth_router, get_current_active_user, require_role
 from .database import get_db, init_db
@@ -18,6 +26,35 @@ from .models import User, ProjectLeader, ProjectMember, OpenProject, OpenProject
 from app.routers import project, contribution
 
 logger = logging.getLogger(__name__)
+
+# 新增：项目admin或平台admin权限检查函数
+def require_project_or_platform_admin():
+    def checker(
+        request: Request,
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_active_user)
+    ):
+        # 平台admin/社区管理员直接放行
+        if current_user.role in [models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER]:
+            return current_user
+        
+        # 从请求路径中获取contribution_id，然后查询对应的project_id
+        contribution_id = request.path_params.get("contribution_id")
+        if contribution_id:
+            contribution = crud.get_github_contribution(db, int(contribution_id))
+            if contribution:
+                # 检查是否为项目admin
+                member = db.query(models.ProjectMember).filter_by(
+                    project_id=contribution.project_id, 
+                    user_id=current_user.id, 
+                    role="ADMIN", 
+                    status="APPROVED"
+                ).first()
+                if member:
+                    return current_user
+        
+        raise HTTPException(status_code=403, detail="无权限审核贡献")
+    return checker
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -922,40 +959,107 @@ def read_github_contribution(
 def accept_github_contribution(
     contribution_id: int,
     user_id: Optional[int] = None,
-    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    current_user: models.User = Depends(require_project_or_platform_admin()),
     db: Session = Depends(get_db)
 ):
-    contribution = crud.accept_github_contribution(db, contribution_id=contribution_id, user_id=user_id)
-    if contribution is None:
-        raise HTTPException(status_code=404, detail="贡献记录不存在或已处理")
+    """接受GitHub贡献 - 先上链成功后再发放积分"""
+    logger.info("进入 main.py 的 accept_github_contribution")
+    # 1. 获取贡献记录
+    contribution = crud.get_github_contribution(db, contribution_id)
+    if not contribution:
+        raise HTTPException(status_code=404, detail="贡献记录不存在")
     
-    # 记录区块链
+    if contribution.status != models.ContributionStatus.PENDING:
+        raise HTTPException(status_code=400, detail="贡献记录已处理")
+    
+    # 2. 获取项目信息
+    project = crud.get_open_project(db, contribution.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="项目不存在")
+    
+    # 3. 获取贡献者信息
+    contributor_user = None
+    if user_id:
+        contributor_user = crud.get_user(db, user_id)
+        if not contributor_user:
+            raise HTTPException(status_code=404, detail="贡献者用户不存在")
+    
+    # 4. 调用区块链合约记录贡献
+    blockchain_result = None
     try:
-        from .blockchain import record_user_points
-        if contribution.user_id:
-            blockchain_record = record_user_points(
-                user_id=contribution.user_id,
-                points=contribution.contribution_points,
-                action=models.BlockchainAction.CONTRIBUTION_RECORD,
-                description=f"GitHub贡献确认: {contribution.issue_title}"
-            )
-            if blockchain_record:
-                crud.create_blockchain_record(db, blockchain_record, contribution.user_id)
-                # 更新贡献记录的区块链哈希
-                update_data = models.GitHubContributionUpdate(
-                    blockchain_hash=blockchain_record.transaction_hash
-                )
-                crud.update_github_contribution(db, contribution_id, update_data)
+        from .blockchain import record_contribution_to_blockchain
+        
+        # 准备上链数据
+        contributor_address = contributor_user.email if contributor_user else "0x0000000000000000000000000000000000000000"
+        github_username = contribution.github_username
+        project_id = contribution.project_id
+        issue_number = contribution.issue_number
+        contribution_type = contribution.contribution_type.value
+        points = contribution.contribution_points
+        issue_title = contribution.issue_title
+        issue_url = contribution.issue_url
+        
+        # 调用区块链合约
+        blockchain_result = record_contribution_to_blockchain(
+            contributor_address=contributor_address,
+            github_username=github_username,
+            project_id=project_id,
+            issue_number=issue_number,
+            contribution_type=contribution_type,
+            points=points,
+            issue_title=issue_title,
+            issue_url=issue_url
+        )
+        
+        if blockchain_result:
+            logger.info(f"区块链调用成功: {blockchain_result}")
+        else:
+            logger.error("区块链调用失败，返回None")
+        
     except Exception as e:
-        logger.error(f"区块链记录失败: {e}")
+        logger.error(f"区块链调用异常: {e}")
+        blockchain_result = None
     
-    return contribution
+    # 5. 更新数据库状态并发放积分
+    update_data = models.GitHubContributionUpdate(
+        status=models.ContributionStatus.ACCEPTED,
+        accepted_at=datetime.utcnow(),
+        blockchain_hash=blockchain_result.get("transaction_hash") if blockchain_result else None,
+        user_id=user_id
+    )
+    
+    updated_contribution = crud.update_github_contribution(db, contribution_id, update_data)
+    
+    # 6. 发放积分给贡献者
+    if user_id and contributor_user:
+        crud.add_user_points(db, user_id, contribution.contribution_points)
+        
+        # 更新贡献者统计
+        crud.update_contributor_stats(db, user_id, contribution.contribution_points)
+        
+        logger.info(f"贡献 {contribution_id} 审核通过，用户 {user_id} 获得 {contribution.contribution_points} 积分")
+    
+    # 7. 创建区块链记录
+    blockchain_record = models.BlockchainRecordCreate(
+        action=models.BlockchainAction.CONTRIBUTION_RECORD,
+        description=f"GitHub贡献确认: {contribution.issue_title}",
+        points_amount=contribution.contribution_points,
+        transaction_hash=blockchain_result.get("transaction_hash") if blockchain_result else None,
+        block_number=blockchain_result.get("block_number") if blockchain_result else 0,
+        gas_used=blockchain_result.get("gas_used") if blockchain_result else 0,
+        is_confirmed=True,
+        confirmed_at=datetime.utcnow()
+    )
+    
+    crud.create_blockchain_record(db, blockchain_record, user_id or 0)
+    
+    return updated_contribution
 
 @app.put("/api/github-contributions/{contribution_id}/reject", response_model=models.GitHubContributionPublic, tags=["GitHub贡献"])
 def reject_github_contribution(
     contribution_id: int,
     reason: Optional[str] = None,
-    current_user: models.User = Depends(require_role([models.UserRole.ADMIN, models.UserRole.COMMUNITY_MANAGER])),
+    current_user: models.User = Depends(require_project_or_platform_admin()),
     db: Session = Depends(get_db)
 ):
     """拒绝GitHub贡献"""

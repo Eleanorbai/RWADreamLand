@@ -33,36 +33,9 @@ def get_contributions(
         for c in contributions
     ]
 
-# 6. 审核贡献
-@router.put("/github-contributions/{contribution_id}/accept")
-def accept_contribution(
-    contribution_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    contribution = db.query(GitHubContribution).filter_by(id=contribution_id).first()
-    if not contribution:
-        raise HTTPException(404, "贡献不存在")
-    if not (is_platform_admin(current_user) or is_project_admin(db, current_user, contribution.project_id)):
-        raise HTTPException(403, "无权限审核")
-    contribution.status = "ACCEPTED"
-    db.commit()
-    return {"message": "审核通过"}
-
-@router.put("/github-contributions/{contribution_id}/reject")
-def reject_contribution(
-    contribution_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    contribution = db.query(GitHubContribution).filter_by(id=contribution_id).first()
-    if not contribution:
-        raise HTTPException(404, "贡献不存在")
-    if not (is_platform_admin(current_user) or is_project_admin(db, current_user, contribution.project_id)):
-        raise HTTPException(403, "无权限审核")
-    contribution.status = "REJECTED"
-    db.commit()
-    return {"message": "已拒绝"}
+# 注意：删除了与main.py冲突的审核贡献路由
+# @router.put("/github-contributions/{contribution_id}/accept") - 已删除
+# @router.put("/github-contributions/{contribution_id}/reject") - 已删除
 
 @router.get("/contributors/rankings")
 def get_contributor_rankings(

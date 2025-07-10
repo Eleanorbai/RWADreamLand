@@ -348,7 +348,7 @@ const OpenSourceProject: React.FC = () => {
     return (
       <div className="container mx-auto py-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">项目不存在</h1>
-        <Button onClick={() => navigate('/origin')}>返回原点馆</Button>
+        <Button onClick={() => navigate('/origin')}>返回孵化舱</Button>
       </div>
     );
   }
@@ -358,7 +358,7 @@ const OpenSourceProject: React.FC = () => {
       <div className="container mx-auto py-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">您不是项目成员</h1>
         <p className="mb-4 text-gray-600">可以先看看其他项目，或申请加入该项目。</p>
-        <Button onClick={() => navigate('/origin')}>返回原点馆</Button>
+        <Button onClick={() => navigate('/origin')}>返回孵化舱</Button>
         <Button onClick={handleApply} className="ml-4">申请加入项目</Button>
       </div>
     );

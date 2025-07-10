@@ -5,8 +5,18 @@ pragma solidity ^0.8.0;
  * @title RWAContribution
  * @dev RWA星球GitHub贡献记录智能合约
  * 用于在FISCO BCOS联盟链上记录和验证用户的开源贡献
+ * 支持多角色权限管理：平台admin、项目owner、项目admin、白名单
  */
-contract RWAContribution {
+contract RWAPlatformContribution {
+    
+    // 角色枚举
+    enum Role {
+        NONE,           // 无权限
+        PLATFORM_ADMIN, // 平台管理员
+        PROJECT_OWNER,  // 项目所有者
+        PROJECT_ADMIN,  // 项目管理员
+        WHITELIST       // 白名单成员
+    }
     
     // 贡献记录结构体
     struct Contribution {
@@ -21,6 +31,7 @@ contract RWAContribution {
         bool isVerified;              // 是否已验证
         string issueTitle;            // Issue标题
         string issueUrl;              // Issue链接
+        address recordedBy;           // 记录人地址
     }
     
     // 贡献者信息结构体
@@ -33,6 +44,7 @@ contract RWAContribution {
         uint256 totalPoints;          // 总积分
         uint256 reputationScore;      // 声誉分数
         bool isActive;                // 是否活跃
+        bool isWhitelisted;           // 是否在白名单中
     }
     
     // 项目信息结构体
@@ -40,7 +52,8 @@ contract RWAContribution {
         uint256 id;                   // 项目ID
         string name;                  // 项目名称
         string githubRepo;            // GitHub仓库地址
-        address manager;              // 项目管理员
+        address owner;                // 项目所有者
+        address admin;                // 项目管理员
         uint256 totalContributions;  // 总贡献数
         uint256 totalPoints;         // 总积分分发
         bool isActive;               // 是否活跃
@@ -54,9 +67,14 @@ contract RWAContribution {
     mapping(uint256 => uint256[]) public projectToContributions;    // 项目的贡献列表
     mapping(string => address) public githubToAddress;              // GitHub用户名到地址映射
     
+    // 权限管理
+    mapping(address => Role) public userRoles;                      // 用户角色映射
+    mapping(address => bool) public whitelist;                      // 白名单映射
+    mapping(uint256 => mapping(address => Role)) public projectRoles; // 项目内用户角色映射
+    
     uint256 public contributionCounter;    // 贡献计数器
     uint256 public projectCounter;         // 项目计数器
-    address public owner;                  // 合约所有者
+    address public platformAdmin;          // 平台管理员
     
     // 事件定义
     event ContributionRecorded(
@@ -65,7 +83,8 @@ contract RWAContribution {
         string githubUsername,
         uint256 indexed projectId,
         uint256 points,
-        string contributionType
+        string contributionType,
+        address recordedBy
     );
     
     event ContributorRegistered(
@@ -78,7 +97,8 @@ contract RWAContribution {
         uint256 indexed projectId,
         string name,
         string githubRepo,
-        address indexed manager
+        address indexed owner,
+        address admin
     );
     
     event ContributionVerified(
@@ -86,16 +106,52 @@ contract RWAContribution {
         address indexed verifier
     );
     
+    event RoleAssigned(
+        address indexed user,
+        Role role,
+        uint256 indexed projectId
+    );
+    
+    event WhitelistUpdated(
+        address indexed user,
+        bool isWhitelisted
+    );
+    
     // 修饰符
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function");
+    modifier onlyPlatformAdmin() {
+        require(userRoles[msg.sender] == Role.PLATFORM_ADMIN, "Only platform admin can call this function");
         _;
     }
     
-    modifier onlyProjectManager(uint256 _projectId) {
+    modifier onlyProjectOwner(uint256 _projectId) {
         require(
-            msg.sender == owner || msg.sender == projects[_projectId].manager,
-            "Only owner or project manager can call this function"
+            userRoles[msg.sender] == Role.PLATFORM_ADMIN || 
+            projects[_projectId].owner == msg.sender,
+            "Only platform admin or project owner can call this function"
+        );
+        _;
+    }
+    
+    modifier onlyProjectAdmin(uint256 _projectId) {
+        require(
+            userRoles[msg.sender] == Role.PLATFORM_ADMIN || 
+            projects[_projectId].owner == msg.sender ||
+            projects[_projectId].admin == msg.sender ||
+            projectRoles[_projectId][msg.sender] == Role.PROJECT_ADMIN,
+            "Only platform admin, project owner, or project admin can call this function"
+        );
+        _;
+    }
+    
+    modifier onlyAuthorized(uint256 _projectId) {
+        require(
+            userRoles[msg.sender] == Role.PLATFORM_ADMIN || 
+            projects[_projectId].owner == msg.sender ||
+            projects[_projectId].admin == msg.sender ||
+            projectRoles[_projectId][msg.sender] == Role.PROJECT_ADMIN ||
+            whitelist[msg.sender] ||
+            projectRoles[_projectId][msg.sender] == Role.WHITELIST,
+            "Only authorized users can call this function"
         );
         _;
     }
@@ -108,36 +164,74 @@ contract RWAContribution {
     
     // 构造函数
     constructor() {
-        owner = msg.sender;
+        platformAdmin = msg.sender;
+        userRoles[msg.sender] = Role.PLATFORM_ADMIN;
         contributionCounter = 0;
         projectCounter = 0;
+    }
+    
+    /**
+     * @dev 分配用户角色
+     * @param _user 用户地址
+     * @param _role 角色
+     * @param _projectId 项目ID（可选，仅用于项目内角色）
+     */
+    function assignRole(address _user, Role _role, uint256 _projectId) public onlyPlatformAdmin {
+        if (_projectId > 0) {
+            require(_projectId <= projectCounter, "Invalid project ID");
+            projectRoles[_projectId][_user] = _role;
+            emit RoleAssigned(_user, _role, _projectId);
+        } else {
+            userRoles[_user] = _role;
+            emit RoleAssigned(_user, _role, 0);
+        }
+    }
+    
+    /**
+     * @dev 更新白名单
+     * @param _user 用户地址
+     * @param _isWhitelisted 是否加入白名单
+     */
+    function updateWhitelist(address _user, bool _isWhitelisted) public onlyPlatformAdmin {
+        whitelist[_user] = _isWhitelisted;
+        if (contributors[_user].addr != address(0)) {
+            contributors[_user].isWhitelisted = _isWhitelisted;
+        }
+        emit WhitelistUpdated(_user, _isWhitelisted);
     }
     
     /**
      * @dev 创建新项目
      * @param _name 项目名称
      * @param _githubRepo GitHub仓库地址
-     * @param _manager 项目管理员地址
+     * @param _owner 项目所有者地址
+     * @param _admin 项目管理员地址
      * @return 项目ID
      */
     function createProject(
         string memory _name,
         string memory _githubRepo,
-        address _manager
-    ) public onlyOwner returns (uint256) {
+        address _owner,
+        address _admin
+    ) public onlyPlatformAdmin returns (uint256) {
         projectCounter++;
         
         projects[projectCounter] = Project({
             id: projectCounter,
             name: _name,
             githubRepo: _githubRepo,
-            manager: _manager,
+            owner: _owner,
+            admin: _admin,
             totalContributions: 0,
             totalPoints: 0,
             isActive: true
         });
         
-        emit ProjectCreated(projectCounter, _name, _githubRepo, _manager);
+        // 自动分配项目角色
+        projectRoles[projectCounter][_owner] = Role.PROJECT_OWNER;
+        projectRoles[projectCounter][_admin] = Role.PROJECT_ADMIN;
+        
+        emit ProjectCreated(projectCounter, _name, _githubRepo, _owner, _admin);
         return projectCounter;
     }
     
@@ -163,7 +257,8 @@ contract RWAContribution {
             totalContributions: 0,
             totalPoints: 0,
             reputationScore: 0,
-            isActive: true
+            isActive: true,
+            isWhitelisted: whitelist[msg.sender]
         });
         
         githubToAddress[_githubUsername] = msg.sender;
@@ -172,7 +267,7 @@ contract RWAContribution {
     }
     
     /**
-     * @dev 记录贡献
+     * @dev 记录贡献（权限控制版本）
      * @param _contributor 贡献者地址
      * @param _githubUsername GitHub用户名
      * @param _projectId 项目ID
@@ -192,7 +287,7 @@ contract RWAContribution {
         uint256 _points,
         string memory _issueTitle,
         string memory _issueUrl
-    ) public onlyProjectManager(_projectId) validProject(_projectId) returns (uint256) {
+    ) public onlyAuthorized(_projectId) validProject(_projectId) returns (uint256) {
         contributionCounter++;
         
         contributions[contributionCounter] = Contribution({
@@ -206,7 +301,8 @@ contract RWAContribution {
             timestamp: block.timestamp,
             isVerified: false,
             issueTitle: _issueTitle,
-            issueUrl: _issueUrl
+            issueUrl: _issueUrl,
+            recordedBy: msg.sender
         });
         
         // 更新映射关系
@@ -233,7 +329,8 @@ contract RWAContribution {
             _githubUsername,
             _projectId,
             _points,
-            _contributionType
+            _contributionType,
+            msg.sender
         );
         
         return contributionCounter;
@@ -243,7 +340,7 @@ contract RWAContribution {
      * @dev 验证贡献
      * @param _contributionId 贡献ID
      */
-    function verifyContribution(uint256 _contributionId) public onlyOwner {
+    function verifyContribution(uint256 _contributionId) public onlyPlatformAdmin {
         require(_contributionId > 0 && _contributionId <= contributionCounter, "Invalid contribution ID");
         require(!contributions[_contributionId].isVerified, "Contribution already verified");
         
@@ -315,23 +412,62 @@ contract RWAContribution {
     }
     
     /**
+     * @dev 检查用户权限
+     * @param _user 用户地址
+     * @param _projectId 项目ID
+     * @return 用户角色
+     */
+    function getUserRole(address _user, uint256 _projectId) 
+        public view returns (Role) {
+        // 平台管理员最高权限
+        if (userRoles[_user] == Role.PLATFORM_ADMIN) {
+            return Role.PLATFORM_ADMIN;
+        }
+        
+        // 项目内角色
+        if (_projectId > 0 && _projectId <= projectCounter) {
+            Role projectRole = projectRoles[_projectId][_user];
+            if (projectRole != Role.NONE) {
+                return projectRole;
+            }
+            
+            // 检查是否为项目所有者或管理员
+            if (projects[_projectId].owner == _user) {
+                return Role.PROJECT_OWNER;
+            }
+            if (projects[_projectId].admin == _user) {
+                return Role.PROJECT_ADMIN;
+            }
+        }
+        
+        // 检查白名单
+        if (whitelist[_user]) {
+            return Role.WHITELIST;
+        }
+        
+        return Role.NONE;
+    }
+    
+    /**
      * @dev 更新项目状态
      * @param _projectId 项目ID
      * @param _isActive 是否活跃
      */
     function updateProjectStatus(uint256 _projectId, bool _isActive) 
-        public onlyOwner {
+        public onlyProjectOwner(_projectId) {
         require(_projectId > 0 && _projectId <= projectCounter, "Invalid project ID");
         projects[_projectId].isActive = _isActive;
     }
     
     /**
-     * @dev 转移所有权
-     * @param _newOwner 新所有者地址
+     * @dev 转移平台管理员权限
+     * @param _newAdmin 新管理员地址
      */
-    function transferOwnership(address _newOwner) public onlyOwner {
-        require(_newOwner != address(0), "New owner cannot be zero address");
-        owner = _newOwner;
+    function transferPlatformAdmin(address _newAdmin) public onlyPlatformAdmin {
+        require(_newAdmin != address(0), "New admin cannot be zero address");
+        platformAdmin = _newAdmin;
+        userRoles[_newAdmin] = Role.PLATFORM_ADMIN;
+        userRoles[msg.sender] = Role.NONE;
     }
     
     /**

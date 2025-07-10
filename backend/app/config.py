@@ -81,6 +81,9 @@ class Settings(BaseSettings):
         "testing": 15,
         "other": 5
     }
+
+    log_level: str = "INFO"
+    log_file: str = "./logs/app.log"
     
     class Config:
         env_file = ".env"

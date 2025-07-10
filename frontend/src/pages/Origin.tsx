@@ -350,7 +350,7 @@ export default function Origin() {
       {/* 页面头部 */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
         <div className="mb-4 sm:mb-0">
-          <h1 className="text-3xl font-bold text-orange-800 mb-2">原点馆</h1>
+          <h1 className="text-3xl font-bold text-orange-800 mb-2">孵化舱</h1>
           <p className="text-gray-600">RWA项目孵化与团队协作中心</p>
         </div>
         <Button 

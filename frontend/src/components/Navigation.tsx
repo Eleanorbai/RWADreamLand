@@ -5,10 +5,10 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { useUser } from "@/hooks/useUser";
 
 const mainNavItems = [
-  { path: '/square', icon: Globe, label: '灵感广场' },
   { path: '/intelligence', icon: MessageCircle, label: '情报港' },
-  { path: '/origin', icon: Users, label: '原点馆' },
+  { path: '/origin', icon: Users, label: '孵化舱' },
   { path: '/dock', icon: MessageSquare, label: 'Dock讨论区' },
+  { path: '/square', icon: Globe, label: '灵感广场' },
   { path: '/me', icon: User, label: '用户中心' },
   { path: '/about', icon: FileText, label: '关于我们' },
 ];
