@@ -287,7 +287,7 @@ pytest
 
 # 权属声明 / Ownership Notice
 
-本项目（RWA平台 Demo，代号：RWA Planet/RWA Dream Land）最初由 [Eleanorbai] 于 [首次提交日期:2025-06-26] 在个人时间独立发起和实现。
+本项目（RWA平台 Demo，代号：RWA Planet/RWA Dream Land/RWA Platform）最初由 [Eleanorbai] 于 [首次提交日期:2025-06-26] 在个人时间独立发起和实现。
 
 - 开发环境：完全使用个人电脑与个人 GitHub 账号，未使用公司设备、数据或同事贡献。  
 - 开发投入：相关服务器（腾讯云服务器、vercel服务器）、AI 工具费用均由本人自费承担。   
