@@ -281,6 +281,28 @@ pytest
 - 问题反馈: [Issues](https://github.com/Eleanorbai/RWADreamLand/issues)
 - 在线演示: https://rwa-dream-land.vercel.app
 
+**RWA Dream Land** - 让学习RWA变得简单而有趣！ 🚀
+
 ---
 
-**RWA Dream Land** - 让学习RWA变得简单而有趣！ 🚀
+# 权属声明 / Ownership Notice
+
+本项目（RWA平台 Demo，代号：RWA Planet/RWA Dream Land）最初由 [Eleanorbai] 于 [首次提交日期:2025-06-26] 在个人时间独立发起和实现。
+
+- 开发环境：完全使用个人电脑与个人 GitHub 账号，未使用公司设备、数据或同事贡献。  
+- 开发投入：相关服务器（腾讯云服务器、vercel服务器）、AI 工具费用均由本人自费承担。   
+- 后续支持：在平台演示过程中，其他个人/组织可能提供了交流或资源支持，但不改变本人作为最初发起人及主要开发者的原创事实。  
+
+本项目的原创权利归属本人。未经书面协议，不得视为本项目的源代码、架构或功能已转让或归属于任何其他主体。
+
+---
+
+**English Version**
+
+This project (RWA Platform Demo, codename: RWA Planet/RWA Dream Land) was originally initiated and implemented independently by [Eleanorbai] on [first commit date: 2025-06-26].
+
+- Development was carried out entirely on personal devices and GitHub account, without using company equipment, data, or colleague contributions.  
+- All costs for servers (Tencent cloud、vercel cloud) and AI tools were personally paid.  
+- Subsequent involvement: During demonstrations, other individuals/organizations may have provided discussions or resource support, but this does not change the fact that the project was originally initiated and developed by myself.  
+
+The original rights of this project belong to me. Without a written agreement, nothing herein shall be construed as a transfer or assignment of ownership of the source code, architecture, or functionalities to any other entity.
