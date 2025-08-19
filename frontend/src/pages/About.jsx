@@ -22,11 +22,11 @@ export default function About() {
         <div className="space-y-4 text-lg text-gray-700 leading-relaxed">
           <p>
             <span className="inline-block mr-2 text-2xl" role="img" aria-label="friends">👫</span>
-            <strong>RWA星球</strong>，是由通商数据里一群充满好奇心的友友们自发发起的学习与共创社区，致力于打造一个探索真实世界资产（RWA）和区块链融合的开放场域。
+            <strong>RWA星球</strong>，是一个对区块链与金融充满好奇心的个人发起的学习与共创社区。我很希望把它打造成一个探索真实世界资产（RWA）与区块链融合的开放场域。
           </p>
           <p>
             <span className="inline-block mr-2 text-2xl" role="img" aria-label="lightbulb">💡</span>
-            我们相信，在这个数字文明加速演进的时代，真正有价值的探索，往往起始于一群人对新世界的共同好奇。
+            我始终相信，在这个数字文明加速演进的时代，真正有价值的探索，往往起始于一群人对新世界的共同好奇。
           </p>
           <ul className="list-disc pl-6 space-y-1">
             <li>📚 获取最新资讯与学习材料，深入理解RWA的底层逻辑；</li>
@@ -35,21 +35,16 @@ export default function About() {
           </ul>
           <p>
             <span className="inline-block mr-2 text-2xl" role="img" aria-label="seedling">🌱</span>
-            我们特别鼓励那些具有落地潜力的好想法在这里生根发芽。
+            🌱 平台期待、鼓励有潜力的想法在这里生根发芽，当具备落地条件时，平台将汇聚多方资源，共同推进。
             <br />
-            一旦被社区认可并具备实践可能，通商数据将提供资源支持，与你一起在 Web3 的数字世界中达成共识、携手前进。
           </p>
           <p>
             <span className="inline-block mr-2 text-2xl" role="img" aria-label="no-leader">🧑‍🚀</span>
             这里没有"主导者"，只有共同探索者。RWA星球希望成为一个由参与者共建共识、共享成果的社区星球。
           </p>
-          <blockquote className="border-l-4 border-blue-300 pl-4 italic text-blue-500 bg-blue-50 rounded-r-lg my-4">
-            我们相信：<br />
-            <span className="font-bold text-pink-500">从材料贡献者，到方案设计者，最终成为项目的共同参与者，<br />这就是我们希望与你共同完成的进化之路。</span>
-          </blockquote>
           <p>
             <span className="inline-block mr-2 text-2xl" role="img" aria-label="welcome">🤗</span>
-            我们欢迎每一位愿意以知识与好奇参与构建未来资产新世界的你，<br />
+            热烈欢迎每一位愿意以知识与好奇参与构建未来资产新世界的你，<br />
             在这里，把学习变成生产力，把共识变成连接，把机会变成结果。
           </p>
         </div>
